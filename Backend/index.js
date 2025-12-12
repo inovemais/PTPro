@@ -1,6 +1,8 @@
 // Carregar variáveis de ambiente primeiro
 require('dotenv').config();
 
+// Fix: Garantir que todas as importações usam case-sensitive paths
+
 const express = require("express");
 const http = require("http");
 const mongoose = require("mongoose");
