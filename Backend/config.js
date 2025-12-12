@@ -3,7 +3,7 @@ const config = {
     secret: process.env.SECRET || 'supersecret',
     expiresPassword: parseInt(process.env.EXPIRES_PASSWORD) || 86400, // expires in 24hours
     saltRounds: parseInt(process.env.SALT_ROUNDS) || 10,
-    port: process.env.PORT || 3000,
+    port: parseInt(process.env.PORT) || 3000,
     hostname: process.env.HOSTNAME || '127.0.0.1'
 }
  

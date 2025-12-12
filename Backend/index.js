@@ -15,13 +15,17 @@ const swaggerSpec = require('./swagger');
 const config = require('./config');
 
 // Configuração de hostname e porta
-const port = process.env.PORT || config.port;
+// Render define PORT automaticamente, garantir que seja um número
+const port = parseInt(process.env.PORT) || parseInt(config.port) || 3000;
 const hostname = ("RENDER" in process.env) ? "0.0.0.0" : config.hostname; // 0.0.0.0 on Render
 
-// Conectar ao MongoDB
+// Conectar ao MongoDB (não bloquear o servidor se falhar)
 mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || config.db)
-  .then(() => console.log('Connection successful!'))
-  .catch((err) => console.error(err));
+  .then(() => console.log('MongoDB connection successful!'))
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
+    // Não bloquear o servidor, mas avisar
+  });
 
 const router = require('./router');
 const app = express();
@@ -97,9 +101,26 @@ io.on('connection', (socket) => {
 });
 
 // Iniciar servidor HTTP e WebSocket
+// IMPORTANTE: Sempre escutar na porta, mesmo se houver erros anteriores
 server.listen(port, hostname, () => {
-  console.log(`Server running at http://${hostname}:${port}`);
-  console.log('Socket.IO server initialized');
-  console.log(`Swagger UI available at http://${hostname}:${port}/api-docs`);
-  console.log(`Allowed CORS origins: ${allowedOrigins.join(', ') || 'All'}`);
+  console.log(`✅ Server running at http://${hostname}:${port}`);
+  console.log('✅ Socket.IO server initialized');
+  console.log(`✅ Swagger UI available at http://${hostname}:${port}/api-docs`);
+  console.log(`✅ Allowed CORS origins: ${allowedOrigins.join(', ') || 'All'}`);
+  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`✅ Render detected: ${"RENDER" in process.env ? 'Yes' : 'No'}`);
+}).on('error', (err) => {
+  console.error('❌ Server error:', err);
+  process.exit(1);
+});
+
+// Garantir que o processo não termine silenciosamente
+process.on('uncaughtException', (err) => {
+  console.error('❌ Uncaught Exception:', err);
+  // Não terminar o processo, apenas logar
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  // Não terminar o processo, apenas logar
 });
