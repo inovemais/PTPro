@@ -77,19 +77,7 @@ cd Frontend
 npm run dev
 ```
 
-## Deploy
 
-Para instruções detalhadas sobre como fazer deploy no Render.com, consulte o arquivo [RENDER_DEPLOY.md](./RENDER_DEPLOY.md).
-
-### Deploy Rápido no Render.com
-
-1. Conecte seu repositório GitHub ao Render
-2. Crie um novo Web Service
-3. Configure:
-   - **Root Directory**: `Backend`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-4. Adicione as variáveis de ambiente necessárias (veja `RENDER_DEPLOY.md`)
 
 ## Funcionalidades
 

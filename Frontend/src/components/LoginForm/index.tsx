@@ -4,6 +4,7 @@ import styles from "./styles.module.scss";
 import { Navigate } from "react-router-dom";
 import { useState } from "react";
 import QRCodeLogin from "../QRCodeLogin";
+import { buildApiUrl } from "../../config/api";
 
 interface LoginFormProps {
   title: string;
@@ -40,7 +41,7 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
   const login = async (data: LoginFormData) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(buildApiUrl("/api/auth/login"), {
         headers: { "Content-Type": "application/json" },
         method: "POST",
         credentials: "include",
@@ -88,7 +89,7 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
   const handleQRScanSuccess = async (qrDataString: string) => {
     // Quando QR code é escaneado, fazer login com ele
     try {
-      const res = await fetch("/api/auth/qr-code/login", {
+      const res = await fetch(buildApiUrl("/api/auth/qr-code/login"), {
         headers: { "Content-Type": "application/json" },
         method: "POST",
         credentials: "include",
