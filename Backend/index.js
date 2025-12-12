@@ -17,7 +17,7 @@ const port = process.env.PORT || config.port;
 const hostname = ("RENDER" in process.env) ? "0.0.0.0" : config.hostname; // 0.0.0.0 on Render
 
 // Conectar ao MongoDB
-mongoose.connect(process.env.MONGO_URI || config.db)
+mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || config.db)
   .then(() => console.log('Connection successful!'))
   .catch((err) => console.error(err));
 

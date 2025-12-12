@@ -3,7 +3,7 @@ const express = require("express");
 const Users = require("../data/users");
 const Members = require("../data/member");
 const cookieParser = require('cookie-parser');
-const VerifyToken = require('../middleware/Token');
+const VerifyToken = require('../middleware/token');
 const QRCode = require('qrcode');
 
 

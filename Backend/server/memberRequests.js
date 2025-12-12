@@ -3,7 +3,7 @@ const express = require("express");
 const MemberRequests = require("../data/member/memberRequestIndex");
 const Users = require("../data/users");
 const scopes = require("../data/users/scopes");
-const VerifyToken = require("../middleware/Token");
+const VerifyToken = require("../middleware/token");
 const cookieParser = require("cookie-parser");
 
 const MemberRequestsRouter = () => {

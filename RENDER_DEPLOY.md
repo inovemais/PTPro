@@ -43,8 +43,12 @@ No painel do serviço, vá em **"Environment"** e adicione as seguintes variáve
 ```
 RENDER=true
 MONGODB_URI=mongodb+srv://admin:admin123@cluster0.4knxo.mongodb.net/stadium?retryWrites=true&w=majority
-SECRET=sua_chave_secreta_super_segura_aqui
+SECRET=89d97b6c2355cf8b6e102d4c00f6c45365e297ce8ae13cdbecbc78f16b5450de273dd4ab0e2497a38fad1363a0dbba146f7a890fbdf523ed2375cdfeec4772e5
 ```
+
+RENDER=true
+MONGODB_URI=mongodb+srv://admin:admin123@cluster0.4knxo.mongodb.net/stadium?retryWrites=true&w=majority
+SECRET=T
 
 #### Opcionais (com valores padrão):
 

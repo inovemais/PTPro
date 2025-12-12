@@ -5,7 +5,7 @@ const Users = require("../data/users");
 const Games = require("../data/games");
 const Stadium = require("../data/stadium");
 const scopes = require("../data/users/scopes");
-const VerifyToken = require("../middleware/Token");
+const VerifyToken = require("../middleware/token");
 const cookieParser = require("cookie-parser");
 
 const TicketsRouter = () => {
