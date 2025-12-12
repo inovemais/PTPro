@@ -56,3 +56,6 @@ coverage/
 tmp/
 temp/
 *.tmp
+
+# MongoDB playground files
+*.mongodb.js

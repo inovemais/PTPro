@@ -12,23 +12,45 @@ const swaggerSpec = require('./swagger');
 
 const config = require('./config');
 
-const hostname = config.hostname;
-const port = config.port;
+// Configuração de hostname e porta
+const port = process.env.PORT || config.port;
+const hostname = ("RENDER" in process.env) ? "0.0.0.0" : config.hostname; // 0.0.0.0 on Render
 
-mongoose.connect(config.db)
-.then(() => console.log('Conection successful!'))
-.catch((err) => console.error(err));
+// Conectar ao MongoDB
+mongoose.connect(process.env.MONGO_URI || config.db)
+  .then(() => console.log('Connection successful!'))
+  .catch((err) => console.error(err));
 
 const router = require('./router');
 const app = express();
 
-// Configurar CORS
-app.use(cors({
-  origin: true, // Permitir todas as origens em desenvolvimento
-  credentials: true, // Permitir cookies
+// Configurar CORS com origens permitidas
+const customFrontendUrl = process.env.FRONTEND_URL || '';
+const allowedOrigins = [
+  customFrontendUrl,
+  'https://pwa-all-app.vercel.app',
+  'http://localhost:5173', // Vite default port
+  'http://localhost:3000', // React default port
+].filter(Boolean);
+
+const isAllowedOrigin = (origin) => {
+  return !origin || allowedOrigins.includes(origin);
+};
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Servir ficheiros estáticos da pasta uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -51,7 +73,7 @@ const server = http.createServer(app);
 // Configurar Socket.IO anexado ao servidor HTTP
 const io = socketio(server, {
   cors: {
-    origin: "*", // Allow all origins (para desenvolvimento)
+    origin: allowedOrigins.length > 0 ? allowedOrigins : "*", // Use allowed origins or allow all
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -77,4 +99,5 @@ server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}`);
   console.log('Socket.IO server initialized');
   console.log(`Swagger UI available at http://${hostname}:${port}/api-docs`);
+  console.log(`Allowed CORS origins: ${allowedOrigins.join(', ') || 'All'}`);
 });
