@@ -124,3 +124,4 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
   // Não terminar o processo, apenas logar
 });
+// Force rebuild Sat Dec 13 09:56:23 WET 2025
