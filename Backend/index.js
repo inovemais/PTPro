@@ -37,8 +37,14 @@ mongoose.connect(mongoUri)
   });
 
 console.log('📦 Loading router...');
-const router = require('./router');
-console.log('✅ Router loaded');
+let router;
+try {
+  router = require('./router');
+  console.log('✅ Router loaded');
+} catch (error) {
+  console.error('❌ Error loading router:', error);
+  throw error; // Se o router não carregar, não podemos continuar
+}
 
 const app = express();
 console.log('✅ Express app created');
