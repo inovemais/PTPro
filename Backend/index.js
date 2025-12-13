@@ -108,7 +108,14 @@ const io = socketio(server, {
 app.set('io', io);
 
 // Inicializar router passando io
-app.use('/api', router.init(io));
+console.log('📦 Initializing router with Socket.IO...');
+try {
+  app.use('/api', router.init(io));
+  console.log('✅ Router initialized');
+} catch (error) {
+  console.error('❌ Error initializing router:', error);
+  throw error;
+}
 
 // Eventos de conexão Socket.IO
 io.on('connection', (socket) => {
