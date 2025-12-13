@@ -27,8 +27,7 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "test": "vitest",
-    "postinstall": "npm install --legacy-peer-deps || true"
+    "test": "vitest"
   },
   "eslintConfig": {
     "extends": [
