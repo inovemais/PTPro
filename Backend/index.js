@@ -51,34 +51,32 @@ console.log('✅ Express app created');
 
 // Handler CRÍTICO para OPTIONS (preflight) - DEVE SER O PRIMEIRO
 // Isso garante que requisições OPTIONS sejam respondidas antes de qualquer outro middleware
+// Usar app.options() diretamente para garantir que seja tratado antes de tudo
+app.options('*', (req, res) => {
+  const origin = req.headers.origin || '*';
+  console.log(`🔄 OPTIONS preflight request from: ${origin} to ${req.path}`);
+  
+  // SEMPRE permitir OPTIONS - o CORS real será verificado na requisição real
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 horas
+  
+  console.log(`✅ OPTIONS preflight responded with 200 for: ${origin}`);
+  res.status(200).end();
+});
+
+// Também adicionar handler genérico para garantir cobertura
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
-    try {
-      const origin = req.headers.origin;
-      console.log(`🔄 OPTIONS preflight request from: ${origin || 'none'} to ${req.path}`);
-      
-      // SEMPRE permitir OPTIONS - o CORS real será verificado na requisição real
-      // Isso resolve o problema de 500 no preflight
-      res.header('Access-Control-Allow-Origin', origin || '*');
-      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-      res.header('Access-Control-Allow-Credentials', 'true');
-      res.header('Access-Control-Max-Age', '86400'); // 24 horas
-      console.log(`✅ OPTIONS preflight responded with 200 for: ${origin || 'none'}`);
-      return res.status(200).end();
-    } catch (err) {
-      console.error('❌ Error in OPTIONS handler:', err);
-      // Mesmo em caso de erro, tentar responder
-      try {
-        res.header('Access-Control-Allow-Origin', '*');
-        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-        return res.status(200).end();
-      } catch (e) {
-        console.error('❌ Failed to send OPTIONS response:', e);
-        return res.status(200).end(); // Tentar enviar resposta vazia mesmo assim
-      }
-    }
+    const origin = req.headers.origin || '*';
+    console.log(`🔄 OPTIONS caught in generic handler: ${origin} to ${req.path}`);
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    return res.status(200).end();
   }
   next();
 });
@@ -152,14 +150,10 @@ const corsOptions = {
 // IMPORTANTE: CORS deve ser aplicado ANTES de qualquer outro middleware
 app.use(cors(corsOptions));
 
-// Handler explícito para requisições OPTIONS (preflight)
-app.options('*', cors(corsOptions));
-
-// Middleware de logging para debug (antes do router)
+// Middleware de logging para debug (antes do router) - pular OPTIONS já tratadas
 app.use((req, res, next) => {
-  console.log(`📥 ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'}`);
-  if (req.method === 'OPTIONS') {
-    console.log('🔄 Preflight request detected');
+  if (req.method !== 'OPTIONS') {
+    console.log(`📥 ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'}`);
   }
   next();
 });
