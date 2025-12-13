@@ -49,6 +49,40 @@ try {
 const app = express();
 console.log('✅ Express app created');
 
+// Handler CRÍTICO para OPTIONS (preflight) - DEVE SER O PRIMEIRO
+// Isso garante que requisições OPTIONS sejam respondidas antes de qualquer outro middleware
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    try {
+      const origin = req.headers.origin;
+      console.log(`🔄 OPTIONS preflight request from: ${origin || 'none'} to ${req.path}`);
+      
+      // SEMPRE permitir OPTIONS - o CORS real será verificado na requisição real
+      // Isso resolve o problema de 500 no preflight
+      res.header('Access-Control-Allow-Origin', origin || '*');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Max-Age', '86400'); // 24 horas
+      console.log(`✅ OPTIONS preflight responded with 200 for: ${origin || 'none'}`);
+      return res.status(200).end();
+    } catch (err) {
+      console.error('❌ Error in OPTIONS handler:', err);
+      // Mesmo em caso de erro, tentar responder
+      try {
+        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        return res.status(200).end();
+      } catch (e) {
+        console.error('❌ Failed to send OPTIONS response:', e);
+        return res.status(200).end(); // Tentar enviar resposta vazia mesmo assim
+      }
+    }
+  }
+  next();
+});
+
 // Configurar CORS com origens permitidas
 const customFrontendUrl = process.env.FRONTEND_URL || '';
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -130,11 +164,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Servir ficheiros estáticos da pasta uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Servir ficheiros estáticos da pasta uploads (pular OPTIONS)
+app.use('/uploads', (req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+  express.static(path.join(__dirname, 'uploads'))(req, res, next);
+});
 
-// Configurar Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+// Configurar Swagger UI (pular OPTIONS)
+app.use('/api-docs', (req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+  swaggerUi.serve(req, res, next);
+}, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'Estadio API Documentation',
   swaggerOptions: {
