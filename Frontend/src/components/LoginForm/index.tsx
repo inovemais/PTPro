@@ -40,13 +40,18 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
 
   const login = async (data: LoginFormData) => {
     setLoading(true);
+    const apiUrl = buildApiUrl("/api/auth/login");
+    console.log("🔗 Attempting login to:", apiUrl);
+    
     try {
-      const res = await fetch(buildApiUrl("/api/auth/login"), {
+      const res = await fetch(apiUrl, {
         headers: { "Content-Type": "application/json" },
         method: "POST",
         credentials: "include",
         body: JSON.stringify(data),
       });
+
+      console.log("📡 Response status:", res.status, res.statusText);
 
       // tentar ler corpo (mesmo em erro) para mostrar mensagem
       let body: LoginResponse;
@@ -54,6 +59,7 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
         body = await res.json();
       } catch (parseError) {
         // Se não conseguir fazer parse do JSON, criar objeto vazio
+        console.error("❌ Failed to parse JSON response:", parseError);
         body = {} as LoginResponse;
       }
 
@@ -78,9 +84,32 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
       } else {
         setLogged(Boolean(body?.auth));
       }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Erro na ligação ao servidor. Verifique se o servidor está a correr.");
+    } catch (error: any) {
+      console.error("❌ Network/Connection error:", error);
+      console.error("Error details:", {
+        message: error?.message,
+        name: error?.name,
+        stack: error?.stack,
+        apiUrl: apiUrl
+      });
+      
+      // Mensagem de erro mais detalhada
+      const errorMessage = error?.message || "Erro desconhecido";
+      const isNetworkError = error?.name === "TypeError" || error?.message?.includes("fetch");
+      
+      if (isNetworkError) {
+        alert(
+          `Erro na ligação ao servidor.\n\n` +
+          `URL: ${apiUrl}\n` +
+          `Erro: ${errorMessage}\n\n` +
+          `Verifique se:\n` +
+          `- O servidor backend está a correr\n` +
+          `- A URL está correta\n` +
+          `- Não há problemas de CORS`
+        );
+      } else {
+        alert(`Erro: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }

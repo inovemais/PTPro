@@ -51,31 +51,84 @@ console.log('✅ Express app created');
 
 // Configurar CORS com origens permitidas
 const customFrontendUrl = process.env.FRONTEND_URL || '';
+const isDevelopment = process.env.NODE_ENV !== 'production';
+const isRender = "RENDER" in process.env;
+
 const allowedOrigins = [
   customFrontendUrl,
   'https://pwa-all-app.vercel.app',
+  'https://pwa-app-swart-xi.vercel.app', // Frontend atual
   'http://localhost:5173', // Vite default port
   'http://localhost:3000', // React default port
+  'http://127.0.0.1:5173', // Vite alternative
+  'http://127.0.0.1:3000', // React alternative
 ].filter(Boolean);
 
 const isAllowedOrigin = (origin) => {
-  return !origin || allowedOrigins.includes(origin);
+  // Em desenvolvimento, permitir todas as origens localhost
+  if (isDevelopment && origin && (origin.includes('localhost') || origin.includes('127.0.0.1'))) {
+    return true;
+  }
+  // Em produção no Render, ser mais permissivo se não houver origem definida
+  if (isRender && !origin) {
+    return true; // Permitir requisições sem origem (ex: Postman, curl)
+  }
+  // Se não houver origem, permitir (pode ser requisição do mesmo domínio)
+  if (!origin) {
+    return true;
+  }
+  // Verificar se está na lista de origens permitidas
+  return allowedOrigins.includes(origin);
 };
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (isAllowedOrigin(origin)) {
-      return callback(null, true);
+    console.log(`🌐 CORS check - Origin: ${origin || 'none'}`);
+    console.log(`🌐 Environment: ${isDevelopment ? 'development' : 'production'}`);
+    console.log(`🌐 Render: ${isRender ? 'Yes' : 'No'}`);
+    
+    try {
+      if (isAllowedOrigin(origin)) {
+        console.log(`✅ CORS allowed for origin: ${origin || 'none'}`);
+        return callback(null, true);
+      }
+      console.log(`❌ CORS blocked for origin: ${origin || 'none'}`);
+      console.log(`📋 Allowed origins: ${allowedOrigins.join(', ') || 'All localhost in dev'}`);
+      // Em produção no Render, se a origem não estiver na lista mas for HTTPS, permitir
+      if (isRender && origin && origin.startsWith('https://')) {
+        console.log(`⚠️  Render production: Allowing HTTPS origin: ${origin}`);
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    } catch (err) {
+      console.error('❌ Error in CORS origin check:', err);
+      // Em caso de erro, permitir em desenvolvimento
+      if (isDevelopment) {
+        return callback(null, true);
+      }
+      return callback(err);
     }
-    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 
+// IMPORTANTE: CORS deve ser aplicado ANTES de qualquer outro middleware
 app.use(cors(corsOptions));
+
+// Handler explícito para requisições OPTIONS (preflight)
+app.options('*', cors(corsOptions));
+
+// Middleware de logging para debug (antes do router)
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'}`);
+  if (req.method === 'OPTIONS') {
+    console.log('🔄 Preflight request detected');
+  }
+  next();
+});
 
 // Servir ficheiros estáticos da pasta uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -116,6 +169,42 @@ try {
   console.error('❌ Error initializing router:', error);
   throw error;
 }
+
+// Middleware de tratamento de erros global (deve ser o último)
+app.use((err, req, res, next) => {
+  console.error('❌ Error middleware caught:', err);
+  console.error('❌ Error name:', err.name);
+  console.error('❌ Error message:', err.message);
+  console.error('❌ Request method:', req.method);
+  console.error('❌ Request path:', req.path);
+  console.error('❌ Request origin:', req.headers.origin);
+  
+  // Se for uma requisição OPTIONS (preflight), sempre responder 200
+  if (req.method === 'OPTIONS') {
+    console.log('✅ Handling OPTIONS error - returning 200');
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    return res.status(200).end();
+  }
+  
+  // Se for erro de CORS, retornar 403 em vez de 500
+  if (err.message && err.message.includes('CORS')) {
+    console.error('❌ CORS error detected');
+    res.status(403).json({
+      error: 'CORS policy violation',
+      message: err.message
+    });
+    return;
+  }
+  
+  // Para outros erros, retornar erro apropriado
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
 
 // Eventos de conexão Socket.IO
 io.on('connection', (socket) => {

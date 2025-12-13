@@ -22,12 +22,16 @@ export function buildApiUrl(path) {
   
   // In development with proxy, return relative path
   if (import.meta.env.DEV && !rawApiBase) {
-    return cleanPath;
+    const url = cleanPath;
+    console.log(`🔧 [API Config] Development mode - using proxy: ${url}`);
+    return url;
   }
   
   // In production or when API URL is set, build full URL
   const baseUrl = rawApiBase.endsWith('/') ? rawApiBase.slice(0, -1) : rawApiBase;
-  return `${baseUrl}${cleanPath}`;
+  const url = `${baseUrl}${cleanPath}`;
+  console.log(`🔧 [API Config] Using base URL: ${baseUrl} -> ${url}`);
+  return url;
 }
 
 /**
