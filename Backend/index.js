@@ -9,8 +9,19 @@ const mongoose = require("mongoose");
 const path = require("path");
 const socketio = require("socket.io");
 const cors = require("cors");
-const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('./swagger');
+
+// Carregar Swagger com proteção contra erros
+let swaggerUi, swaggerSpec;
+try {
+  swaggerUi = require('swagger-ui-express');
+  swaggerSpec = require('./swagger');
+  console.log('✅ Swagger loaded');
+} catch (swaggerError) {
+  console.error('❌ Error loading Swagger:', swaggerError.message);
+  // Não bloquear o servidor se Swagger falhar
+  swaggerUi = null;
+  swaggerSpec = null;
+}
 
 const config = require('./config');
 
@@ -176,26 +187,30 @@ app.use('/uploads', (req, res, next) => {
 });
 
 // Configurar Swagger UI (pular OPTIONS e proteger contra erros)
-try {
-  app.use('/api-docs', (req, res, next) => {
-    if (req.method === 'OPTIONS') {
-      return next();
-    }
-    swaggerUi.serve(req, res, next);
-  }, swaggerUi.setup(swaggerSpec, {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: 'Estadio API Documentation',
-    swaggerOptions: {
-      persistAuthorization: true, // Manter autorização após refresh
-      displayRequestDuration: true, // Mostrar duração das requisições
-      filter: true, // Habilitar filtro de tags
-      tryItOutEnabled: true // Habilitar "Try it out" por padrão
-    }
-  }));
-  console.log('✅ Swagger UI configured');
-} catch (swaggerError) {
-  console.error('❌ Error configuring Swagger UI:', swaggerError);
-  // Não bloquear o servidor se Swagger falhar
+if (swaggerUi && swaggerSpec) {
+  try {
+    app.use('/api-docs', (req, res, next) => {
+      if (req.method === 'OPTIONS') {
+        return next();
+      }
+      swaggerUi.serve(req, res, next);
+    }, swaggerUi.setup(swaggerSpec, {
+      customCss: '.swagger-ui .topbar { display: none }',
+      customSiteTitle: 'Estadio API Documentation',
+      swaggerOptions: {
+        persistAuthorization: true, // Manter autorização após refresh
+        displayRequestDuration: true, // Mostrar duração das requisições
+        filter: true, // Habilitar filtro de tags
+        tryItOutEnabled: true // Habilitar "Try it out" por padrão
+      }
+    }));
+    console.log('✅ Swagger UI configured');
+  } catch (swaggerError) {
+    console.error('❌ Error configuring Swagger UI:', swaggerError);
+    // Não bloquear o servidor se Swagger falhar
+  }
+} else {
+  console.log('⚠️  Swagger UI not available (failed to load)');
 }
 
 // Criar servidor HTTP
@@ -216,12 +231,39 @@ app.set('io', io);
 // Inicializar router passando io
 console.log('📦 Initializing router with Socket.IO...');
 try {
-  app.use('/api', router.init(io));
+  const apiRouter = router.init(io);
+  app.use('/api', apiRouter);
   console.log('✅ Router initialized');
 } catch (error) {
   console.error('❌ Error initializing router:', error);
-  throw error;
+  console.error('❌ Error stack:', error.stack);
+  // Não bloquear o servidor, mas criar um router de fallback
+  app.use('/api', (req, res, next) => {
+    console.error(`❌ Router not available for ${req.method} ${req.path}`);
+    res.status(503).json({ 
+      error: 'Service temporarily unavailable',
+      message: 'Router initialization failed'
+    });
+  });
 }
+
+// Handler para rotas não encontradas (antes do middleware de erros)
+app.use((req, res, next) => {
+  // Se for OPTIONS, já foi tratado antes, mas garantir resposta
+  if (req.method === 'OPTIONS') {
+    const origin = req.headers.origin || '*';
+    res.writeHead(200, {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+      'Access-Control-Allow-Credentials': 'true',
+      'Content-Length': '0'
+    });
+    return res.end();
+  }
+  // Para outras rotas não encontradas
+  res.status(404).json({ error: 'Route not found' });
+});
 
 // Middleware de tratamento de erros global (deve ser o último)
 app.use((err, req, res, next) => {
@@ -232,14 +274,28 @@ app.use((err, req, res, next) => {
   console.error('❌ Request path:', req.path);
   console.error('❌ Request origin:', req.headers.origin);
   
+  // Se a resposta já foi enviada, não fazer nada
+  if (res.headersSent) {
+    return next(err);
+  }
+  
   // Se for uma requisição OPTIONS (preflight), sempre responder 200
   if (req.method === 'OPTIONS') {
     console.log('✅ Handling OPTIONS error - returning 200');
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    return res.status(200).end();
+    try {
+      const origin = req.headers.origin || '*';
+      res.writeHead(200, {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'true',
+        'Content-Length': '0'
+      });
+      return res.end();
+    } catch (e) {
+      console.error('❌ Error sending OPTIONS response:', e);
+      return res.status(200).end();
+    }
   }
   
   // Se for erro de CORS, retornar 403 em vez de 500
