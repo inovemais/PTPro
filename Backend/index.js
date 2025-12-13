@@ -49,34 +49,43 @@ try {
 const app = express();
 console.log('✅ Express app created');
 
-// Handler CRÍTICO para OPTIONS (preflight) - DEVE SER O PRIMEIRO
-// Isso garante que requisições OPTIONS sejam respondidas antes de qualquer outro middleware
-// Usar app.options() diretamente para garantir que seja tratado antes de tudo
-app.options('*', (req, res) => {
-  const origin = req.headers.origin || '*';
-  console.log(`🔄 OPTIONS preflight request from: ${origin} to ${req.path}`);
-  
-  // SEMPRE permitir OPTIONS - o CORS real será verificado na requisição real
-  res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Max-Age', '86400'); // 24 horas
-  
-  console.log(`✅ OPTIONS preflight responded with 200 for: ${origin}`);
-  res.status(200).end();
-});
-
-// Também adicionar handler genérico para garantir cobertura
+// Handler CRÍTICO para OPTIONS (preflight) - DEVE SER O ABSOLUTAMENTE PRIMEIRO
+// Este handler deve responder a TODAS as requisições OPTIONS antes de qualquer outro middleware
 app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
-    const origin = req.headers.origin || '*';
-    console.log(`🔄 OPTIONS caught in generic handler: ${origin} to ${req.path}`);
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    return res.status(200).end();
+    try {
+      const origin = req.headers.origin || '*';
+      console.log(`🔄 OPTIONS preflight request from: ${origin} to ${req.path}`);
+      
+      // SEMPRE permitir OPTIONS - o CORS real será verificado na requisição real
+      // Usar writeHead para garantir que os headers sejam definidos antes de qualquer resposta
+      res.writeHead(200, {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Max-Age': '86400',
+        'Content-Length': '0'
+      });
+      
+      console.log(`✅ OPTIONS preflight responded with 200 for: ${origin}`);
+      return res.end();
+    } catch (err) {
+      console.error('❌ Error in OPTIONS handler:', err);
+      // Mesmo em caso de erro, tentar enviar resposta
+      try {
+        res.writeHead(200, {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          'Content-Length': '0'
+        });
+        return res.end();
+      } catch (e) {
+        console.error('❌ Failed to send OPTIONS response:', e);
+        return res.status(200).end();
+      }
+    }
   }
   next();
 });
@@ -166,22 +175,28 @@ app.use('/uploads', (req, res, next) => {
   express.static(path.join(__dirname, 'uploads'))(req, res, next);
 });
 
-// Configurar Swagger UI (pular OPTIONS)
-app.use('/api-docs', (req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    return next();
-  }
-  swaggerUi.serve(req, res, next);
-}, swaggerUi.setup(swaggerSpec, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Estadio API Documentation',
-  swaggerOptions: {
-    persistAuthorization: true, // Manter autorização após refresh
-    displayRequestDuration: true, // Mostrar duração das requisições
-    filter: true, // Habilitar filtro de tags
-    tryItOutEnabled: true // Habilitar "Try it out" por padrão
-  }
-}));
+// Configurar Swagger UI (pular OPTIONS e proteger contra erros)
+try {
+  app.use('/api-docs', (req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
+    swaggerUi.serve(req, res, next);
+  }, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'Estadio API Documentation',
+    swaggerOptions: {
+      persistAuthorization: true, // Manter autorização após refresh
+      displayRequestDuration: true, // Mostrar duração das requisições
+      filter: true, // Habilitar filtro de tags
+      tryItOutEnabled: true // Habilitar "Try it out" por padrão
+    }
+  }));
+  console.log('✅ Swagger UI configured');
+} catch (swaggerError) {
+  console.error('❌ Error configuring Swagger UI:', swaggerError);
+  // Não bloquear o servidor se Swagger falhar
+}
 
 // Criar servidor HTTP
 const server = http.createServer(app);
