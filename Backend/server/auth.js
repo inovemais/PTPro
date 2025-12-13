@@ -51,11 +51,17 @@ function AuthRouter() {
         })
         .then((tokenResponse) => {
           // The httpOnly: true setting means that the cookie can't be read using JavaScript
+          const isProduction = process.env.NODE_ENV === 'production';
+          const isSecure = isProduction || process.env.FORCE_SECURE_COOKIE === 'true';
+          
           res.cookie("token", tokenResponse.token, { 
             httpOnly: true,
-            sameSite: 'lax',
-            secure: false
+            sameSite: isSecure ? 'none' : 'lax',
+            secure: isSecure,
+            maxAge: 86400000 // 24 horas
           });
+          
+          console.log(`🍪 QR Code login cookie set: secure=${isSecure}, sameSite=${isSecure ? 'none' : 'lax'}`);
           res.status(200).send({
             success: true,
             auth: true,
@@ -211,11 +217,17 @@ function AuthRouter() {
       })
       .then(async (response) => {
         // The httpOnly: true setting means that the cookie can't be read using JavaScript but can still be sent back to the server in HTTP requests
+        const isProduction = process.env.NODE_ENV === 'production';
+        const isSecure = isProduction || process.env.FORCE_SECURE_COOKIE === 'true';
+        
         res.cookie("token", response.token, { 
           httpOnly: true,
-          sameSite: 'lax',
-          secure: false // Em desenvolvimento, usar false. Em produção com HTTPS, usar true
+          sameSite: isSecure ? 'none' : 'lax', // 'none' requer secure: true
+          secure: isSecure, // true em produção (HTTPS), false em desenvolvimento
+          maxAge: 86400000 // 24 horas
         });
+        
+        console.log(`🍪 Cookie set: secure=${isSecure}, sameSite=${isSecure ? 'none' : 'lax'}`);
         
         // Gerar QR code para login futuro
         const userId = response.decoded?.id || response.user?._id?.toString();

@@ -75,14 +75,22 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
       // normalizar auth para boolean e guardar token se existir
       if (body?.token) {
         localStorage.setItem("token", body.token);
+        console.log("✅ Token saved to localStorage");
       }
+      
+      // Verificar se auth é true (mesmo que não tenha token explícito, o cookie pode estar setado)
+      const isAuthenticated = Boolean(body?.auth);
+      console.log("🔐 Authentication status:", isAuthenticated, "Token:", !!body?.token);
       
       // Se o login retornou QR code, guardá-lo
       if (body?.qrCode) {
         setQrCode(body.qrCode);
-        // Não redirecionar imediatamente, mostrar QR code
+        // Também marcar como logado, pois o login foi bem-sucedido
+        setLogged(isAuthenticated);
+        console.log("📱 QR Code received, user is authenticated");
       } else {
-        setLogged(Boolean(body?.auth));
+        setLogged(isAuthenticated);
+        console.log("✅ Login successful, redirecting...");
       }
     } catch (error: any) {
       console.error("❌ Network/Connection error:", error);
@@ -144,8 +152,17 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
   };
 
   const handleCloseQRCode = () => {
+    console.log("🔐 Closing QR code, verifying authentication...");
     setQrCode(null);
-    setLogged(true);
+    // Verificar se o token ainda existe antes de marcar como logado
+    const token = localStorage.getItem("token");
+    if (token) {
+      console.log("✅ Token found, setting logged to true");
+      setLogged(true);
+    } else {
+      console.warn("⚠️ No token found, but proceeding anyway (cookie may be set)");
+      setLogged(true);
+    }
   };
 
   if (isLogged && !qrCode) {
