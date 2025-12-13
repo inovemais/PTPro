@@ -19,16 +19,29 @@ const config = require('./config');
 const port = parseInt(process.env.PORT) || parseInt(config.port) || 3000;
 const hostname = ("RENDER" in process.env) ? "0.0.0.0" : config.hostname; // 0.0.0.0 on Render
 
+console.log('🚀 Starting server...');
+console.log(`📌 Port: ${port}`);
+console.log(`📌 Hostname: ${hostname}`);
+console.log(`📌 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+console.log(`📌 RENDER: ${"RENDER" in process.env ? 'Yes' : 'No'}`);
+
 // Conectar ao MongoDB (não bloquear o servidor se falhar)
-mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI || config.db)
-  .then(() => console.log('MongoDB connection successful!'))
+const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || config.db;
+console.log(`📌 MongoDB URI: ${mongoUri ? 'Set' : 'Not set'}`);
+
+mongoose.connect(mongoUri)
+  .then(() => console.log('✅ MongoDB connection successful!'))
   .catch((err) => {
-    console.error('MongoDB connection error:', err);
+    console.error('❌ MongoDB connection error:', err.message);
     // Não bloquear o servidor, mas avisar
   });
 
+console.log('📦 Loading router...');
 const router = require('./router');
+console.log('✅ Router loaded');
+
 const app = express();
+console.log('✅ Express app created');
 
 // Configurar CORS com origens permitidas
 const customFrontendUrl = process.env.FRONTEND_URL || '';
@@ -102,17 +115,27 @@ io.on('connection', (socket) => {
 
 // Iniciar servidor HTTP e WebSocket
 // IMPORTANTE: Sempre escutar na porta, mesmo se houver erros anteriores
-server.listen(port, hostname, () => {
-  console.log(`✅ Server running at http://${hostname}:${port}`);
-  console.log('✅ Socket.IO server initialized');
-  console.log(`✅ Swagger UI available at http://${hostname}:${port}/api-docs`);
-  console.log(`✅ Allowed CORS origins: ${allowedOrigins.join(', ') || 'All'}`);
-  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`✅ Render detected: ${"RENDER" in process.env ? 'Yes' : 'No'}`);
-}).on('error', (err) => {
-  console.error('❌ Server error:', err);
+console.log('🎯 Starting server.listen()...');
+console.log(`🎯 Attempting to listen on ${hostname}:${port}`);
+
+try {
+  server.listen(port, hostname, () => {
+    console.log(`✅✅✅ Server successfully running at http://${hostname}:${port} ✅✅✅`);
+    console.log('✅ Socket.IO server initialized');
+    console.log(`✅ Swagger UI available at http://${hostname}:${port}/api-docs`);
+    console.log(`✅ Allowed CORS origins: ${allowedOrigins.join(', ') || 'All'}`);
+    console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`✅ Render detected: ${"RENDER" in process.env ? 'Yes' : 'No'}`);
+  }).on('error', (err) => {
+    console.error('❌❌❌ Server listen error:', err);
+    console.error('❌ Error code:', err.code);
+    console.error('❌ Error message:', err.message);
+    process.exit(1);
+  });
+} catch (error) {
+  console.error('❌❌❌ Fatal error starting server:', error);
   process.exit(1);
-});
+}
 
 // Garantir que o processo não termine silenciosamente
 process.on('uncaughtException', (err) => {
