@@ -189,8 +189,6 @@ app.use('/uploads', (req, res, next) => {
 // Configurar Swagger UI (pular OPTIONS e proteger contra erros)
 if (swaggerUi && swaggerSpec) {
   try {
-    // Na versão 5.x do swagger-ui-express, usar apenas swaggerUi.setup()
-    // O swaggerUi.serve() foi removido nesta versão
     const swaggerUiOptions = {
       customCss: '.swagger-ui .topbar { display: none }',
       customSiteTitle: 'Estadio API Documentation',
@@ -202,6 +200,8 @@ if (swaggerUi && swaggerSpec) {
       }
     };
     
+    // Na versão 5.x, swaggerUi.serve é um array de middlewares
+    // Primeiro servir os ficheiros estáticos, depois configurar o setup
     app.use('/api-docs', (req, res, next) => {
       if (req.method === 'OPTIONS') {
         return res.status(200).end();
@@ -209,7 +209,9 @@ if (swaggerUi && swaggerSpec) {
       next();
     });
     
-    app.use('/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
+    // swaggerUi.serve serve os ficheiros estáticos (CSS, JS)
+    // swaggerUi.setup configura a UI com o spec
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
     console.log('✅ Swagger UI configured');
   } catch (swaggerError) {
     console.error('❌ Error configuring Swagger UI:', swaggerError);
