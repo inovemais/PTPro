@@ -65,16 +65,22 @@ const Tickets = () => {
         }
       })
       .then((response) => {
+        console.log('📋 Tickets response:', response);
         const { tickets: list = [] } = response;
+        console.log('📋 Tickets list:', list);
+        console.log('📋 Response auth:', response.auth);
+        
         if (response.auth) {
           setTickets({
-            data: list,
+            data: Array.isArray(list) ? list : [],
             pagination: {
               current: current || 1,
               pageSize: pageSize,
-              total: list.length,
+              total: Array.isArray(list) ? list.length : 0,
             },
           });
+        } else {
+          console.warn('📋 Auth is false, not setting tickets');
         }
       })
       .catch((err) => {
@@ -296,7 +302,11 @@ const Tickets = () => {
           </div>
         </Col>
         <Col>
-          <Table columns={["sector", "price", "gameId", "userId"]} rows={tickets.data} />
+          {tickets.data && tickets.data.length > 0 ? (
+            <Table columns={["sector", "price", "gameId", "userId"]} rows={tickets.data} />
+          ) : (
+            <p>No tickets found.</p>
+          )}
         </Col>
       </Row>
     </Container>
