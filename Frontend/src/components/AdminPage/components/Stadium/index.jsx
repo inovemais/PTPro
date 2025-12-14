@@ -22,8 +22,14 @@ const Stadium = () => {
         skip,
       });
 
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch(url, {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: "include",
     })
       .then((res) => res.json())
@@ -85,8 +91,14 @@ const Stadium = () => {
       sectors: sectors,
     };
 
+    const token = localStorage.getItem("token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch("/api/stadium", {
-      headers: { "Content-Type": "application/json" },
+      headers: headers,
       method: "POST",
       credentials: "include",
       body: JSON.stringify(payload),

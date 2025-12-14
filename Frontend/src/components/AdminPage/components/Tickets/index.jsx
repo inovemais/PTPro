@@ -19,8 +19,14 @@ const Tickets = () => {
         skip,
       });
 
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch(url, {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: "include",
     })
       .then((res) => res.json())
@@ -41,8 +47,14 @@ const Tickets = () => {
   }, []);
 
   const fetchGames = useCallback(() => {
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch("/api/games?limit=100&skip=0", {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: "include",
     })
       .then((res) => res.json())
@@ -55,8 +67,14 @@ const Tickets = () => {
   }, []);
 
   const fetchUsers = useCallback(() => {
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch("/api/users?limit=100&skip=0", {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: "include",
     })
       .then((res) => res.json())
@@ -82,8 +100,14 @@ const Tickets = () => {
       userId: data.userId,
     };
 
+    const token = localStorage.getItem("token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch("/api/tickets/user", {
-      headers: { "Content-Type": "application/json" },
+      headers: headers,
       method: "POST",
       credentials: "include",
       body: JSON.stringify(payload),

@@ -12,8 +12,14 @@ const Games = () => {
   const { register, handleSubmit, reset } = useForm();
 
   const fetchStadiums = useCallback(() => {
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch("/api/stadium?limit=100&skip=0", {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: "include",
     })
       .then((res) => res.json())
@@ -34,8 +40,14 @@ const Games = () => {
         skip,
       });
 
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch(url, {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: "include",
     })
       .then((res) => res.json())
@@ -99,8 +111,14 @@ const Games = () => {
       team: { home: data.teamHome, visitor: data.teamVisitor },
     };
 
+    const token = localStorage.getItem("token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch("/api/games", {
-      headers: { "Content-Type": "application/json" },
+      headers: headers,
       method: "POST",
       credentials: "include",
       body: JSON.stringify(payload),
