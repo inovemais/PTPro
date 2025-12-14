@@ -257,13 +257,18 @@ function AuthRouter() {
             });
 
             res.status(200);
+            // Garantir que o token seja sempre incluído explicitamente
             const responseBody = {
-              ...response,
+              auth: response.auth || true,
+              token: response.token, // Garantir que o token está presente
+              decoded: response.decoded,
+              user: response.user,
               qrCode: qrCodeImage
             };
             console.log('📤 Sending login response with QR code');
             console.log('📤 Response includes token:', !!responseBody.token);
             console.log('📤 Response includes auth:', !!responseBody.auth);
+            console.log('📤 Token value (first 20 chars):', responseBody.token ? responseBody.token.substring(0, 20) + '...' : 'MISSING');
             res.send(responseBody);
           } catch (qrErr) {
             console.error('Error generating QR code:', qrErr);
@@ -273,10 +278,18 @@ function AuthRouter() {
           }
         } else {
           res.status(200);
+          // Garantir que o token seja sempre incluído explicitamente
+          const responseBody = {
+            auth: response.auth || true,
+            token: response.token, // Garantir que o token está presente
+            decoded: response.decoded,
+            user: response.user
+          };
           console.log('📤 Sending login response without QR code');
-          console.log('📤 Response includes token:', !!response.token);
-          console.log('📤 Response includes auth:', !!response.auth);
-          res.send(response);
+          console.log('📤 Response includes token:', !!responseBody.token);
+          console.log('📤 Response includes auth:', !!responseBody.auth);
+          console.log('📤 Token value (first 20 chars):', responseBody.token ? responseBody.token.substring(0, 20) + '...' : 'MISSING');
+          res.send(responseBody);
         }
       })
       .catch((err) => {

@@ -182,16 +182,29 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
 
   const handleCloseQRCode = () => {
     console.log("🔐 Closing QR code, verifying authentication...");
-    setQrCode(null);
-    // Verificar se o token ainda existe antes de marcar como logado
+    
+    // Verificar se o token existe antes de fechar o QR code
     const token = localStorage.getItem("token");
-    if (token) {
-      console.log("✅ Token found, setting logged to true");
-      setLogged(true);
+    console.log("🔐 Token check before closing QR code:", token ? `Present (${token.substring(0, 20)}...)` : 'NOT FOUND');
+    
+    if (!token) {
+      console.error("❌ CRITICAL: No token found in localStorage!");
+      console.error("❌ This will cause authentication to fail");
+      console.error("❌ Checking if token was ever saved...");
+      
+      // Tentar verificar se o token foi salvo em algum momento
+      const allKeys = Object.keys(localStorage);
+      console.log("🔍 All localStorage keys:", allKeys);
+      
+      // Se não houver token, tentar fazer uma última verificação
+      // Mas ainda assim permitir o redirecionamento para ver o erro
+      alert("Aviso: Token não encontrado. A autenticação pode falhar. Verifique o console para mais detalhes.");
     } else {
-      console.warn("⚠️ No token found, but proceeding anyway (cookie may be set)");
-      setLogged(true);
+      console.log("✅ Token found, length:", token.length);
     }
+    
+    setQrCode(null);
+    setLogged(true);
   };
 
   if (isLogged && !qrCode) {
