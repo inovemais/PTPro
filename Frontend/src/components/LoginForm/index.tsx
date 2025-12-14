@@ -73,22 +73,37 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
 
       // sucesso
       // normalizar auth para boolean e guardar token se existir
+      console.log("🔐 Login response received:", {
+        hasToken: !!body?.token,
+        hasAuth: !!body?.auth,
+        hasQrCode: !!body?.qrCode,
+        responseKeys: Object.keys(body || {})
+      });
+      
       if (body?.token) {
-        localStorage.setItem("token", body.token);
-        console.log("✅ Token saved to localStorage");
-        console.log("✅ Token value (first 20 chars):", body.token.substring(0, 20) + "...");
-        console.log("✅ Token length:", body.token.length);
-        
-        // Verificar se foi realmente salvo
-        const savedToken = localStorage.getItem("token");
-        if (savedToken === body.token) {
-          console.log("✅ Token verification: Successfully saved and verified");
-        } else {
-          console.error("❌ Token verification: Failed to save token correctly");
+        try {
+          localStorage.setItem("token", body.token);
+          console.log("✅ Token saved to localStorage");
+          console.log("✅ Token value (first 20 chars):", body.token.substring(0, 20) + "...");
+          console.log("✅ Token length:", body.token.length);
+          
+          // Verificar se foi realmente salvo
+          const savedToken = localStorage.getItem("token");
+          if (savedToken === body.token) {
+            console.log("✅ Token verification: Successfully saved and verified");
+          } else {
+            console.error("❌ Token verification: Failed to save token correctly");
+            console.error("❌ Expected:", body.token.substring(0, 20) + "...");
+            console.error("❌ Got:", savedToken ? savedToken.substring(0, 20) + "..." : "null");
+          }
+        } catch (error) {
+          console.error("❌ Error saving token to localStorage:", error);
         }
       } else {
-        console.warn("⚠️  No token in response body, checking cookie...");
-        console.warn("⚠️  Response body keys:", Object.keys(body || {}));
+        console.error("❌ CRITICAL: No token in response body!");
+        console.error("❌ Response body:", JSON.stringify(body, null, 2));
+        console.error("❌ This means the token will not be available for subsequent requests");
+        console.error("❌ Authentication will fail unless cookie is working");
       }
       
       // Verificar se auth é true (mesmo que não tenha token explícito, o cookie pode estar setado)

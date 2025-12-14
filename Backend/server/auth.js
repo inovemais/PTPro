@@ -257,10 +257,14 @@ function AuthRouter() {
             });
 
             res.status(200);
-            res.send({
+            const responseBody = {
               ...response,
               qrCode: qrCodeImage
-            });
+            };
+            console.log('📤 Sending login response with QR code');
+            console.log('📤 Response includes token:', !!responseBody.token);
+            console.log('📤 Response includes auth:', !!responseBody.auth);
+            res.send(responseBody);
           } catch (qrErr) {
             console.error('Error generating QR code:', qrErr);
             // Se falhar ao gerar QR code, ainda retorna login bem-sucedido
@@ -269,6 +273,9 @@ function AuthRouter() {
           }
         } else {
           res.status(200);
+          console.log('📤 Sending login response without QR code');
+          console.log('📤 Response includes token:', !!response.token);
+          console.log('📤 Response includes auth:', !!response.auth);
           res.send(response);
         }
       })
