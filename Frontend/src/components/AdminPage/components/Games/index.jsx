@@ -22,13 +22,40 @@ const Games = () => {
       headers: headers,
       credentials: "include",
     })
-      .then((res) => res.json())
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status}, body: ${errorText.substring(0, 200)}`);
+        }
+        
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
+        }
+        
+        const text = await response.text();
+        if (!text || text.trim().length === 0) {
+          throw new Error("Empty response from server");
+        }
+        
+        try {
+          return JSON.parse(text);
+        } catch (jsonErr) {
+          console.error("JSON parsing error in fetchStadiums:", jsonErr);
+          console.error("Response text:", text.substring(0, 500));
+          throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+        }
+      })
       .then((response) => {
         if (response.auth && response.stadiums) {
           setStadiums(response.stadiums);
         }
       })
-      .catch(() => setStadiums([]));
+      .catch((err) => {
+        console.error("Erro ao carregar estádios:", err);
+        setStadiums([]);
+      });
   }, []);
 
   const fetchGames = useCallback((pageSize = 10, current = 1) => {
@@ -50,7 +77,41 @@ const Games = () => {
       headers: headers,
       credentials: "include",
     })
-      .then((res) => res.json())
+      .then(async (response) => {
+        if (!response.ok) {
+          let errorText;
+          try {
+            errorText = await response.text();
+            try {
+              const errorJson = JSON.parse(errorText);
+              throw new Error(`HTTP error! status: ${response.status}, message: ${errorJson.message || errorJson.error || errorText}`);
+            } catch {
+              throw new Error(`HTTP error! status: ${response.status}, body: ${errorText.substring(0, 200)}`);
+            }
+          } catch (parseErr) {
+            throw new Error(`HTTP error! status: ${response.status}, ${parseErr.message}`);
+          }
+        }
+        
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
+        }
+        
+        const text = await response.text();
+        if (!text || text.trim().length === 0) {
+          throw new Error("Empty response from server");
+        }
+        
+        try {
+          return JSON.parse(text);
+        } catch (jsonErr) {
+          console.error("JSON parsing error in fetchGames:", jsonErr);
+          console.error("Response text:", text.substring(0, 500));
+          throw new Error(`Invalid JSON response: ${jsonErr.message}. Response preview: ${text.substring(0, 200)}`);
+        }
+      })
       .then((response) => {
         const { games: list = [], pagination } = response;
         if (response.auth) {
@@ -64,7 +125,10 @@ const Games = () => {
           });
         }
       })
-      .catch(() => setGames({ data: [], pagination: { current: 1, pageSize } }));
+      .catch((err) => {
+        console.error("Erro ao carregar jogos:", err);
+        setGames({ data: [], pagination: { current: 1, pageSize } });
+      });
   }, []);
 
   useEffect(() => {
@@ -123,9 +187,40 @@ const Games = () => {
       credentials: "include",
       body: JSON.stringify(payload),
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Game duplicate or invalid");
-        return res.json();
+      .then(async (res) => {
+        const contentType = res.headers.get("content-type");
+        const text = await res.text();
+        
+        if (!res.ok) {
+          let errorMessage = "Game duplicate or invalid";
+          if (contentType && contentType.includes("application/json") && text) {
+            try {
+              const errorData = JSON.parse(text);
+              errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch {
+              errorMessage = text.substring(0, 200) || errorMessage;
+            }
+          } else if (text) {
+            errorMessage = text.substring(0, 200) || errorMessage;
+          }
+          throw new Error(errorMessage);
+        }
+        
+        if (!text || text.trim().length === 0) {
+          return {};
+        }
+        
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            return JSON.parse(text);
+          } catch (jsonErr) {
+            console.error("JSON parsing error in addGame:", jsonErr);
+            console.error("Response text:", text.substring(0, 500));
+            throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+          }
+        }
+        
+        return {};
       })
       .then(() => {
         const { pageSize = 10, current = 1 } = games.pagination || {};
