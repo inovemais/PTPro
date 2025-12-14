@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Container, Row, Col } from "reactstrap";
 import Table from "../../../Table";
 import { useForm } from "react-hook-form";
+import { buildApiUrl } from "../../../../config/api";
 import styles from "./styles.module.scss";
 
 const Tickets = () => {
@@ -12,12 +13,11 @@ const Tickets = () => {
 
   const fetchTickets = useCallback((pageSize = 10, current = 1) => {
     const skip = (Number(current) - 1) * Number(pageSize);
-    const url =
-      "/api/tickets?" +
-      new URLSearchParams({
-        limit: pageSize,
-        skip,
-      });
+    const queryParams = new URLSearchParams({
+      limit: pageSize,
+      skip,
+    });
+    const url = buildApiUrl(`/api/tickets?${queryParams}`);
 
     const token = localStorage.getItem("token");
     const headers = { Accept: "application/json" };
@@ -90,7 +90,7 @@ const Tickets = () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    fetch("/api/games?limit=100&skip=0", {
+    fetch(buildApiUrl("/api/games?limit=100&skip=0"), {
       headers: headers,
       credentials: "include",
     })
@@ -137,7 +137,7 @@ const Tickets = () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    fetch("/api/users?limit=100&skip=0", {
+    fetch(buildApiUrl("/api/users?limit=100&skip=0"), {
       headers: headers,
       credentials: "include",
     })
@@ -197,7 +197,7 @@ const Tickets = () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    fetch("/api/tickets/user", {
+    fetch(buildApiUrl("/api/tickets/user"), {
       headers: headers,
       method: "POST",
       credentials: "include",

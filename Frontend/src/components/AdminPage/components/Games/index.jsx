@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Container, Row, Col } from "reactstrap";
 import Table from "../../../Table";
 import { useForm } from "react-hook-form";
+import { buildApiUrl } from "../../../../config/api";
 import styles from "./styles.module.scss";
 
 const Games = () => {
@@ -18,7 +19,7 @@ const Games = () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    fetch("/api/stadium?limit=100&skip=0", {
+    fetch(buildApiUrl("/api/stadium?limit=100&skip=0"), {
       headers: headers,
       credentials: "include",
     })
@@ -60,12 +61,11 @@ const Games = () => {
 
   const fetchGames = useCallback((pageSize = 10, current = 1) => {
     const skip = (Number(current) - 1) * Number(pageSize);
-    const url =
-      "/api/games?" +
-      new URLSearchParams({
-        limit: pageSize,
-        skip,
-      });
+    const queryParams = new URLSearchParams({
+      limit: pageSize,
+      skip,
+    });
+    const url = buildApiUrl(`/api/games?${queryParams}`);
 
     const token = localStorage.getItem("token");
     const headers = { Accept: "application/json" };
@@ -181,7 +181,7 @@ const Games = () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    fetch("/api/games", {
+    fetch(buildApiUrl("/api/games"), {
       headers: headers,
       method: "POST",
       credentials: "include",

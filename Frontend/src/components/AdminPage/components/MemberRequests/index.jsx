@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { Container, Row, Col, Card, CardBody, CardTitle, Button, Badge, Alert } from "reactstrap";
+import { buildApiUrl } from "../../../../config/api";
 import styles from "./styles.module.scss";
 
 const MemberRequests = () => {
@@ -8,18 +9,49 @@ const MemberRequests = () => {
   const [alert, setAlert] = useState({ show: false, message: "", type: "success" });
 
   const fetchRequests = useCallback(() => {
-    fetch("/api/member-requests?limit=100&skip=0", {
-      headers: { Accept: "application/json" },
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    fetch(buildApiUrl("/api/member-requests?limit=100&skip=0"), {
+      headers: headers,
       credentials: "include",
     })
-      .then((res) => res.json())
+      .then(async (response) => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status}, body: ${errorText.substring(0, 200)}`);
+        }
+        
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
+        }
+        
+        const text = await response.text();
+        if (!text || text.trim().length === 0) {
+          throw new Error("Empty response from server");
+        }
+        
+        try {
+          return JSON.parse(text);
+        } catch (jsonErr) {
+          console.error("JSON parsing error in fetchRequests:", jsonErr);
+          console.error("Response text:", text.substring(0, 500));
+          throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+        }
+      })
       .then((response) => {
         if (response.auth && response.requests) {
           setRequests(response.requests);
         }
         setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Erro ao carregar pedidos de membro:", err);
         setLoading(false);
       });
   }, []);
@@ -29,18 +61,50 @@ const MemberRequests = () => {
   }, [fetchRequests]);
 
   const handleApprove = (requestId) => {
-    fetch(`/api/member-requests/${requestId}/approve`, {
-      headers: { "Content-Type": "application/json" },
+    const token = localStorage.getItem("token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    fetch(buildApiUrl(`/api/member-requests/${requestId}/approve`), {
+      headers: headers,
       method: "PUT",
       credentials: "include",
     })
-      .then((res) => {
+      .then(async (res) => {
+        const contentType = res.headers.get("content-type");
+        const text = await res.text();
+        
         if (!res.ok) {
-          return res.json().then((data) => {
-            throw new Error(data.error || "Failed to approve request");
-          });
+          let errorData;
+          if (contentType && contentType.includes("application/json") && text) {
+            try {
+              errorData = JSON.parse(text);
+            } catch {
+              errorData = { error: text.substring(0, 200) || "Failed to approve request" };
+            }
+          } else {
+            errorData = { error: text.substring(0, 200) || "Failed to approve request" };
+          }
+          throw new Error(errorData.error || "Failed to approve request");
         }
-        return res.json();
+        
+        if (!text || text.trim().length === 0) {
+          return {};
+        }
+        
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            return JSON.parse(text);
+          } catch (jsonErr) {
+            console.error("JSON parsing error in handleApprove:", jsonErr);
+            console.error("Response text:", text.substring(0, 500));
+            throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+          }
+        }
+        
+        return {};
       })
       .then(() => {
         setAlert({
@@ -64,19 +128,51 @@ const MemberRequests = () => {
   const handleReject = (requestId) => {
     const reason = prompt("Enter reason for rejection (optional):");
     
-    fetch(`/api/member-requests/${requestId}/reject`, {
-      headers: { "Content-Type": "application/json" },
+    const token = localStorage.getItem("token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    fetch(buildApiUrl(`/api/member-requests/${requestId}/reject`), {
+      headers: headers,
       method: "PUT",
       credentials: "include",
       body: JSON.stringify({ reason: reason || "No reason provided" }),
     })
-      .then((res) => {
+      .then(async (res) => {
+        const contentType = res.headers.get("content-type");
+        const text = await res.text();
+        
         if (!res.ok) {
-          return res.json().then((data) => {
-            throw new Error(data.error || "Failed to reject request");
-          });
+          let errorData;
+          if (contentType && contentType.includes("application/json") && text) {
+            try {
+              errorData = JSON.parse(text);
+            } catch {
+              errorData = { error: text.substring(0, 200) || "Failed to reject request" };
+            }
+          } else {
+            errorData = { error: text.substring(0, 200) || "Failed to reject request" };
+          }
+          throw new Error(errorData.error || "Failed to reject request");
         }
-        return res.json();
+        
+        if (!text || text.trim().length === 0) {
+          return {};
+        }
+        
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            return JSON.parse(text);
+          } catch (jsonErr) {
+            console.error("JSON parsing error in handleReject:", jsonErr);
+            console.error("Response text:", text.substring(0, 500));
+            throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+          }
+        }
+        
+        return {};
       })
       .then(() => {
         setAlert({

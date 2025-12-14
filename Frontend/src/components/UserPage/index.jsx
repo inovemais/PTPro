@@ -7,6 +7,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Notifications } from "react-push-notification";
 import addNotification from "react-push-notification";
+import { buildApiUrl } from "../../config/api";
 import styles from "./styles.module.scss";
 import Table from "../Table";
 
@@ -54,7 +55,7 @@ const UserPage = () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    fetch("/api/tickets?limit=100&skip=0", {
+    fetch(buildApiUrl("/api/tickets?limit=100&skip=0"), {
       headers: headers,
       credentials: "include",
     })
@@ -102,7 +103,7 @@ const UserPage = () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    fetch("/api/member-requests/my-requests", {
+    fetch(buildApiUrl("/api/member-requests/my-requests"), {
       headers: headers,
       credentials: "include",
     })
@@ -151,7 +152,7 @@ const UserPage = () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    fetch("/api/auth/me", {
+    fetch(buildApiUrl("/api/auth/me"), {
       headers: headers,
       credentials: "include",
     })
@@ -337,7 +338,7 @@ const UserPage = () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
     
-    fetch("/api/member-requests", {
+    fetch(buildApiUrl("/api/member-requests"), {
       headers: headers,
       method: "POST",
       credentials: "include",

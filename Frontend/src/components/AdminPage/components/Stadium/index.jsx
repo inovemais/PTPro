@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Container, Row, Col } from "reactstrap";
 import Table from "../../../Table";
 import { useForm } from "react-hook-form";
+import { buildApiUrl } from "../../../../config/api";
 import styles from "./styles.module.scss";
 
 const Stadium = () => {
@@ -15,12 +16,11 @@ const Stadium = () => {
 
   const fetchStadiums = useCallback((pageSize = 10, current = 1) => {
     const skip = (Number(current) - 1) * Number(pageSize);
-    const url =
-      "/api/stadium?" +
-      new URLSearchParams({
-        limit: pageSize,
-        skip,
-      });
+    const queryParams = new URLSearchParams({
+      limit: pageSize,
+      skip,
+    });
+    const url = buildApiUrl(`/api/stadium?${queryParams}`);
 
     const token = localStorage.getItem("token");
     const headers = { Accept: "application/json" };
@@ -134,7 +134,7 @@ const Stadium = () => {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    fetch("/api/stadium", {
+    fetch(buildApiUrl("/api/stadium"), {
       headers: headers,
       method: "POST",
       credentials: "include",
