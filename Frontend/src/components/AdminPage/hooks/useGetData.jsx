@@ -22,8 +22,15 @@ export const useGetData = (url = "", pageSize, current) => {
 
     setLoading(true);
 
+    // Obter token do localStorage
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch(querie, {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: "include",
     })
     .then(async (response) => {

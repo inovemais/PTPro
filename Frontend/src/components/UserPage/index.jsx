@@ -48,8 +48,14 @@ const UserPage = () => {
   }, [isValidLogin]);
 
   const fetchTickets = () => {
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     fetch("/api/tickets?limit=100&skip=0", {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: "include",
     })
       .then(async (res) => {
@@ -90,8 +96,14 @@ const UserPage = () => {
   };
 
   const fetchMemberRequests = () => {
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     fetch("/api/member-requests/my-requests", {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: "include",
     })
       .then(async (res) => {
@@ -133,8 +145,14 @@ const UserPage = () => {
   };
 
   const fetchUserInfo = () => {
+    const token = localStorage.getItem("token");
+    const headers = { Accept: "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     fetch("/api/auth/me", {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: "include",
     })
       .then(async (res) => {
@@ -313,8 +331,14 @@ const UserPage = () => {
   }, [isValidLogin, socketAddListener, socketRemoveListener, showGameCreatedNotification, showMemberCreatedNotification]);
 
   const requestMembership = () => {
+    const token = localStorage.getItem("token");
+    const headers = { "Content-Type": "application/json" };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     fetch("/api/member-requests", {
-      headers: { "Content-Type": "application/json" },
+      headers: headers,
       method: "POST",
       credentials: "include",
     })

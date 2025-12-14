@@ -24,8 +24,22 @@ const Users = () => {
     const url = buildApiUrl(`/api/users?${queryParams}`);
     console.log('🔗 Fetching users from:', url);
 
+    // Obter token do localStorage
+    const token = localStorage.getItem("token");
+    const headers = {
+      Accept: "application/json"
+    };
+    
+    // Adicionar token ao header se existir
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      console.log('🔐 Token added to Authorization header');
+    } else {
+      console.error('❌ No token in localStorage!');
+    }
+
     fetch(url, {
-      headers: { Accept: "application/json" },
+      headers: headers,
       credentials: 'include'
     })
       .then(async (response) => {
@@ -107,10 +121,19 @@ const Users = () => {
         role: { name: 'user', scope: "notMember" },
       };
 
+    // Obter token do localStorage
+    const token = localStorage.getItem("token");
+    const headers = {
+      "Content-Type": "application/json"
+    };
+    
+    // Adicionar token ao header se existir
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     fetch(buildApiUrl("/api/users"), {
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: headers,
       method: "POST",
       credentials: 'include',
       body: JSON.stringify(jsonData),

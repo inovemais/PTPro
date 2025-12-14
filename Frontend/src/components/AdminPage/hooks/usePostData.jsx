@@ -7,10 +7,18 @@ export const usePostData = (url = "") => {
 
   const addData = (data) => {
     setLoading(true);
+    
+    // Obter token do localStorage
+    const token = localStorage.getItem("token");
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     fetch(`/api/${url}?`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: headers,
       method: "POST",
       credentials: "include",
       body: JSON.stringify(data),
