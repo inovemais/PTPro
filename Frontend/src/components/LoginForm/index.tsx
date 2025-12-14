@@ -77,8 +77,18 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
         localStorage.setItem("token", body.token);
         console.log("✅ Token saved to localStorage");
         console.log("✅ Token value (first 20 chars):", body.token.substring(0, 20) + "...");
+        console.log("✅ Token length:", body.token.length);
+        
+        // Verificar se foi realmente salvo
+        const savedToken = localStorage.getItem("token");
+        if (savedToken === body.token) {
+          console.log("✅ Token verification: Successfully saved and verified");
+        } else {
+          console.error("❌ Token verification: Failed to save token correctly");
+        }
       } else {
         console.warn("⚠️  No token in response body, checking cookie...");
+        console.warn("⚠️  Response body keys:", Object.keys(body || {}));
       }
       
       // Verificar se auth é true (mesmo que não tenha token explícito, o cookie pode estar setado)

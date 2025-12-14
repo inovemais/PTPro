@@ -15,17 +15,22 @@ export const useAuth = () => {
         console.log('🔐 API URL:', apiUrl);
         console.log('🔐 Will send credentials: include (cookies)');
         
+        // Construir headers - IMPORTANTE: não usar Content-Type para GET requests
         const headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Accept': 'application/json'
         };
         
         // Adicionar token ao header se existir (o cookie também será enviado automaticamente)
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
             console.log('🔐 Token added to Authorization header');
+            console.log('🔐 Token length:', token.length);
         } else {
-            console.log('⚠️  No token in localStorage, relying on cookie only');
+            console.error('❌ CRITICAL: No token in localStorage!');
+            console.error('❌ This will cause authentication to fail');
+            // Tentar verificar se há algum token em outro lugar
+            const allKeys = Object.keys(localStorage);
+            console.log('🔍 All localStorage keys:', allKeys);
         }
         
         console.log('🔐 Request headers:', JSON.stringify(headers, null, 2));
