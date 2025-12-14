@@ -9,6 +9,8 @@ import { io } from "socket.io-client";
  * @param {object} options - Opções de configuração do Socket.IO
  * @returns {object} - { socket, socketAddListener, socketRemoveListener, isConnected }
  */
+import { getApiBase } from '../config/api';
+
 export const useSocket = (url = undefined, options = {}) => {
   const socketRef = useRef(null);
   const listenersRef = useRef(new Map()); // Armazenar listeners para poder removê-los depois
@@ -17,9 +19,21 @@ export const useSocket = (url = undefined, options = {}) => {
   // Inicializar socket
   useEffect(() => {
     // Determinar URL do socket
-    // Se url for undefined, vazio ou null, Socket.IO usa a origem atual (window.location.origin)
-    // Isso permite usar o proxy do Vite em desenvolvimento
-    const socketUrl = url && url.trim() !== "" ? url : undefined;
+    let socketUrl = url && url.trim() !== "" ? url : undefined;
+    
+    // Se não foi fornecida uma URL, determinar automaticamente
+    if (!socketUrl) {
+      // Em desenvolvimento, usar undefined para usar o proxy do Vite
+      if (import.meta.env.DEV) {
+        socketUrl = undefined;
+      } else {
+        // Em produção, usar a mesma base URL da API
+        const apiBase = getApiBase();
+        socketUrl = apiBase || 'https://pwa-app-nudl.onrender.com';
+      }
+    }
+    
+    console.log('🔌 Socket.IO URL:', socketUrl || 'Using proxy (dev mode)');
     
     // Criar conexão Socket.IO
     // Em desenvolvimento com Vite, usar undefined faz o Socket.IO conectar à origem atual

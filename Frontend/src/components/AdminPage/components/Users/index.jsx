@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Container, Row, Col } from "reactstrap";
 import Table from "../../../Table";
 import { useForm } from "react-hook-form";
+import { buildApiUrl } from "../../../config/api";
 import styles from "./styles.module.scss";
 
 
@@ -16,18 +17,33 @@ const Users = () => {
   // defaults e cálculo correto de skip
   const fetchApiUsers = useCallback((pageSize = 10, current = 1) => {
     const skip = (Number(current) - 1) * Number(pageSize);
-    const url =
-      "/api/users?" +
-      new URLSearchParams({
-        limit: pageSize,
-        skip,
-      });
+    const queryParams = new URLSearchParams({
+      limit: pageSize,
+      skip,
+    });
+    const url = buildApiUrl(`/api/users?${queryParams}`);
+    console.log('🔗 Fetching users from:', url);
 
     fetch(url, {
       headers: { Accept: "application/json" },
       credentials: 'include'
     })
-      .then((response) => response.json())
+      .then(async (response) => {
+        // Verificar se a resposta é OK
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+        }
+        
+        // Verificar se o content-type é JSON
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await response.text();
+          throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
+        }
+        
+        return response.json();
+      })
       .then((response) => {
         const { users: usersList = [], pagination } = response;
         const auth = response.auth;
@@ -45,6 +61,11 @@ const Users = () => {
       })
       .catch((err) => {
         console.error("Erro ao carregar utilizador:", err);
+        console.error("Erro details:", {
+          message: err.message,
+          name: err.name,
+          stack: err.stack
+        });
         setUsers({
           data: [],
           pagination: { current: 1, pageSize },

@@ -21,7 +21,8 @@ const UserPage = () => {
   const [alertMessage, setAlertMessage] = useState("");
   const [alertType, setAlertType] = useState("success");
 
-  // Configurar Socket.IO - usar undefined para usar o proxy do Vite
+  // Configurar Socket.IO - useSocket já determina a URL automaticamente
+  // Em dev usa proxy, em prod usa a URL do backend
   const { socketAddListener, socketRemoveListener, isConnected } = useSocket(undefined, {
     withCredentials: true,
   });

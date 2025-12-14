@@ -10,8 +10,25 @@ import { io } from "socket.io-client";
 // Variáveis de ambiente devem ter o prefixo VITE_ para serem expostas
 // Em desenvolvimento, usar URL vazia ou undefined para usar o proxy do Vite
 // Em produção, usar a URL completa do servidor
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 
-  (import.meta.env.DEV ? undefined : "http://localhost:3000");
+import { getApiBase } from '../config/api';
+
+const getSocketUrl = () => {
+  // Se houver variável de ambiente específica, usar ela
+  if (import.meta.env.VITE_SOCKET_URL) {
+    return import.meta.env.VITE_SOCKET_URL;
+  }
+  
+  // Em desenvolvimento, usar undefined para usar o proxy do Vite
+  if (import.meta.env.DEV) {
+    return undefined;
+  }
+  
+  // Em produção, usar a mesma base URL da API
+  const apiBase = getApiBase();
+  return apiBase || 'https://pwa-app-nudl.onrender.com';
+};
+
+const SOCKET_URL = getSocketUrl();
 
 // Opções de configuração do Socket.IO
 const socketOptions = {
