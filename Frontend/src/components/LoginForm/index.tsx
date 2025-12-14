@@ -76,11 +76,15 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
       if (body?.token) {
         localStorage.setItem("token", body.token);
         console.log("✅ Token saved to localStorage");
+        console.log("✅ Token value (first 20 chars):", body.token.substring(0, 20) + "...");
+      } else {
+        console.warn("⚠️  No token in response body, checking cookie...");
       }
       
       // Verificar se auth é true (mesmo que não tenha token explícito, o cookie pode estar setado)
       const isAuthenticated = Boolean(body?.auth);
-      console.log("🔐 Authentication status:", isAuthenticated, "Token:", !!body?.token);
+      console.log("🔐 Authentication status:", isAuthenticated, "Token in body:", !!body?.token);
+      console.log("🔐 Full response body:", JSON.stringify(body, null, 2));
       
       // Se o login retornou QR code, guardá-lo
       if (body?.qrCode) {

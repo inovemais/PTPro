@@ -220,14 +220,25 @@ function AuthRouter() {
         const isProduction = process.env.NODE_ENV === 'production';
         const isSecure = isProduction || process.env.FORCE_SECURE_COOKIE === 'true';
         
-        res.cookie("token", response.token, { 
+        // Configurar cookie para funcionar em produção (cross-origin)
+        const cookieOptions = {
           httpOnly: true,
-          sameSite: isSecure ? 'none' : 'lax', // 'none' requer secure: true
+          maxAge: 86400000, // 24 horas
           secure: isSecure, // true em produção (HTTPS), false em desenvolvimento
-          maxAge: 86400000 // 24 horas
-        });
+        };
         
-        console.log(`🍪 Cookie set: secure=${isSecure}, sameSite=${isSecure ? 'none' : 'lax'}`);
+        // Em produção, usar sameSite: 'none' para cross-origin
+        // Em desenvolvimento, usar sameSite: 'lax'
+        if (isSecure) {
+          cookieOptions.sameSite = 'none';
+        } else {
+          cookieOptions.sameSite = 'lax';
+        }
+        
+        res.cookie("token", response.token, cookieOptions);
+        
+        console.log(`🍪 Cookie set: secure=${isSecure}, sameSite=${cookieOptions.sameSite}, domain=${req.headers.host}`);
+        console.log(`🍪 Cookie will be sent to: ${req.headers.origin || 'same-origin'}`);
         
         // Gerar QR code para login futuro
         const userId = response.decoded?.id || response.user?._id?.toString();
