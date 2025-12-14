@@ -189,12 +189,9 @@ app.use('/uploads', (req, res, next) => {
 // Configurar Swagger UI (pular OPTIONS e proteger contra erros)
 if (swaggerUi && swaggerSpec) {
   try {
-    app.use('/api-docs', (req, res, next) => {
-      if (req.method === 'OPTIONS') {
-        return next();
-      }
-      swaggerUi.serve(req, res, next);
-    }, swaggerUi.setup(swaggerSpec, {
+    // Na versão 5.x do swagger-ui-express, usar apenas swaggerUi.setup()
+    // O swaggerUi.serve() foi removido nesta versão
+    const swaggerUiOptions = {
       customCss: '.swagger-ui .topbar { display: none }',
       customSiteTitle: 'Estadio API Documentation',
       swaggerOptions: {
@@ -203,7 +200,16 @@ if (swaggerUi && swaggerSpec) {
         filter: true, // Habilitar filtro de tags
         tryItOutEnabled: true // Habilitar "Try it out" por padrão
       }
-    }));
+    };
+    
+    app.use('/api-docs', (req, res, next) => {
+      if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+      }
+      next();
+    });
+    
+    app.use('/api-docs', swaggerUi.setup(swaggerSpec, swaggerUiOptions));
     console.log('✅ Swagger UI configured');
   } catch (swaggerError) {
     console.error('❌ Error configuring Swagger UI:', swaggerError);
