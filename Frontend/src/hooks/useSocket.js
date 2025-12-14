@@ -23,17 +23,29 @@ export const useSocket = (url = undefined, options = {}) => {
     
     // Se não foi fornecida uma URL, determinar automaticamente
     if (!socketUrl) {
+      const isProduction = import.meta.env.PROD || import.meta.env.MODE === 'production';
+      console.log('🔌 Determining Socket.IO URL automatically...');
+      console.log('🔌 Environment check:', {
+        DEV: import.meta.env.DEV,
+        MODE: import.meta.env.MODE,
+        PROD: import.meta.env.PROD,
+        isProduction
+      });
+      
       // Em desenvolvimento, usar undefined para usar o proxy do Vite
-      if (import.meta.env.DEV) {
+      if (!isProduction) {
         socketUrl = undefined;
+        console.log('🔌 Development mode: using proxy');
       } else {
         // Em produção, usar a mesma base URL da API
         const apiBase = getApiBase();
         socketUrl = apiBase || 'https://pwa-app-nudl.onrender.com';
+        console.log('🔌 Production mode: using', socketUrl);
       }
     }
     
-    console.log('🔌 Socket.IO URL:', socketUrl || 'Using proxy (dev mode)');
+    console.log('🔌 Final Socket.IO URL:', socketUrl || 'Using proxy (dev mode)');
+    console.log('🔌 Socket.IO will connect to:', socketUrl || window.location.origin);
     
     // Criar conexão Socket.IO
     // Em desenvolvimento com Vite, usar undefined faz o Socket.IO conectar à origem atual

@@ -13,19 +13,34 @@ import { io } from "socket.io-client";
 import { getApiBase } from '../config/api';
 
 const getSocketUrl = () => {
+  const isProduction = import.meta.env.PROD || import.meta.env.MODE === 'production';
+  console.log('🔌 getSocketUrl() called');
+  console.log('🔌 Environment:', {
+    DEV: import.meta.env.DEV,
+    MODE: import.meta.env.MODE,
+    PROD: import.meta.env.PROD,
+    isProduction,
+    VITE_SOCKET_URL: import.meta.env.VITE_SOCKET_URL,
+    VITE_API_URL: import.meta.env.VITE_API_URL
+  });
+  
   // Se houver variável de ambiente específica, usar ela
   if (import.meta.env.VITE_SOCKET_URL) {
+    console.log('🔌 Using VITE_SOCKET_URL:', import.meta.env.VITE_SOCKET_URL);
     return import.meta.env.VITE_SOCKET_URL;
   }
   
   // Em desenvolvimento, usar undefined para usar o proxy do Vite
-  if (import.meta.env.DEV) {
+  if (!isProduction) {
+    console.log('🔌 Development mode: returning undefined (will use proxy)');
     return undefined;
   }
   
   // Em produção, usar a mesma base URL da API
   const apiBase = getApiBase();
-  return apiBase || 'https://pwa-app-nudl.onrender.com';
+  const finalUrl = apiBase || 'https://pwa-app-nudl.onrender.com';
+  console.log('🔌 Production mode: returning', finalUrl);
+  return finalUrl;
 };
 
 const SOCKET_URL = getSocketUrl();

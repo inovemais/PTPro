@@ -2,7 +2,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { Container, Row, Col, Card, CardBody, CardTitle, Button, Alert } from "reactstrap";
 import { useAuth } from "../ProtectRoute/hooks/useAuth";
 import { useSocket } from "../../hooks/useSocket";
-import { createSocket } from "../../socket/socket";
 import { toast } from "react-toastify";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
