@@ -15,12 +15,40 @@ export const usePostData = (url = "") => {
       credentials: "include",
       body: JSON.stringify(data),
     })
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error("Error ao adicionar");
+      .then(async (response) => {
+        const contentType = response.headers.get("content-type");
+        const text = await response.text();
+        
+        if (!response.ok) {
+          let errorMessage = "Error ao adicionar";
+          if (contentType && contentType.includes("application/json") && text) {
+            try {
+              const errorData = JSON.parse(text);
+              errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch {
+              errorMessage = text.substring(0, 200) || errorMessage;
+            }
+          } else if (text) {
+            errorMessage = text.substring(0, 200) || errorMessage;
+          }
+          throw new Error(errorMessage);
         }
+        
+        if (!text || text.trim().length === 0) {
+          return {};
+        }
+        
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            return JSON.parse(text);
+          } catch (jsonErr) {
+            console.error("JSON parsing error in usePostData:", jsonErr);
+            console.error("Response text:", text.substring(0, 500));
+            throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+          }
+        }
+        
+        return {};
       })
       .then((jsonData) => {
         setData(jsonData);

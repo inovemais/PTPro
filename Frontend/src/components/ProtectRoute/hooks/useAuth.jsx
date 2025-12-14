@@ -47,10 +47,19 @@ export const useAuth = () => {
                 // Tentar ler o corpo da resposta para mais detalhes
                 let errorBody;
                 try {
-                    errorBody = await response.json();
+                    const text = await response.text();
+                    if (text && text.trim().length > 0) {
+                        try {
+                            errorBody = JSON.parse(text);
+                        } catch {
+                            errorBody = { message: text.substring(0, 200) };
+                        }
+                    } else {
+                        errorBody = { message: 'Empty error response' };
+                    }
                     console.error('❌ Auth check failed - Response body:', errorBody);
                 } catch (e) {
-                    console.error('❌ Auth check failed - Could not parse response body');
+                    console.error('❌ Auth check failed - Could not parse response body:', e);
                     errorBody = { message: 'Could not parse error response' };
                 }
                 
@@ -65,7 +74,27 @@ export const useAuth = () => {
                 
                 throw new Error(`HTTP error! status: ${response.status}, message: ${errorBody?.message || errorBody?.error || 'Unknown error'}`);
             }
-            return response.json();
+            
+            // Verificar content-type
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                const text = await response.text();
+                throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
+            }
+            
+            // Ler texto primeiro e fazer parse manualmente
+            const text = await response.text();
+            if (!text || text.trim().length === 0) {
+                throw new Error("Empty response from server");
+            }
+            
+            try {
+                return JSON.parse(text);
+            } catch (jsonErr) {
+                console.error('❌ JSON parsing error in useAuth:', jsonErr);
+                console.error('❌ Response text:', text.substring(0, 500));
+                throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+            }
         })
         .then((response) => {
             console.log('✅ Auth check successful:', response);

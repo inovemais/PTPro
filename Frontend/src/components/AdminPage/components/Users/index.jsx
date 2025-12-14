@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Container, Row, Col } from "reactstrap";
 import Table from "../../../Table";
 import { useForm } from "react-hook-form";
-import { buildApiUrl } from "../../../config/api";
+import { buildApiUrl } from "../../../../config/api";
 import styles from "./styles.module.scss";
 
 
@@ -31,8 +31,19 @@ const Users = () => {
       .then(async (response) => {
         // Verificar se a resposta é OK
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
+          let errorText;
+          try {
+            errorText = await response.text();
+            // Tentar fazer parse se for JSON
+            try {
+              const errorJson = JSON.parse(errorText);
+              throw new Error(`HTTP error! status: ${response.status}, message: ${errorJson.message || errorJson.error || errorText}`);
+            } catch {
+              throw new Error(`HTTP error! status: ${response.status}, body: ${errorText.substring(0, 200)}`);
+            }
+          } catch (parseErr) {
+            throw new Error(`HTTP error! status: ${response.status}, ${parseErr.message}`);
+          }
         }
         
         // Verificar se o content-type é JSON
@@ -42,7 +53,19 @@ const Users = () => {
           throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
         }
         
-        return response.json();
+        // Ler o texto primeiro para verificar se é JSON válido
+        const text = await response.text();
+        if (!text || text.trim().length === 0) {
+          throw new Error("Empty response from server");
+        }
+        
+        try {
+          return JSON.parse(text);
+        } catch (jsonErr) {
+          console.error("JSON parsing error:", jsonErr);
+          console.error("Response text:", text.substring(0, 500));
+          throw new Error(`Invalid JSON response: ${jsonErr.message}. Response preview: ${text.substring(0, 200)}`);
+        }
       })
       .then((response) => {
         const { users: usersList = [], pagination } = response;
@@ -84,7 +107,7 @@ const Users = () => {
         role: { name: 'user', scope: "notMember" },
       };
 
-    fetch("/api/users", {
+    fetch(buildApiUrl("/api/users"), {
       headers: {
         "Content-Type": "application/json",
       },
@@ -92,13 +115,40 @@ const Users = () => {
       credentials: 'include',
       body: JSON.stringify(jsonData),
     })
-      .then((response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          alert("User duplicate");
-          throw new Error("Utilizador duplicado");
+      .then(async (response) => {
+        const contentType = response.headers.get("content-type");
+        const text = await response.text();
+        
+        if (!response.ok) {
+          let errorData;
+          if (contentType && contentType.includes("application/json") && text) {
+            try {
+              errorData = JSON.parse(text);
+            } catch {
+              errorData = { message: text.substring(0, 200) || "User duplicate" };
+            }
+          } else {
+            errorData = { message: text.substring(0, 200) || "User duplicate" };
+          }
+          alert(errorData.message || "User duplicate");
+          throw new Error(errorData.message || "Utilizador duplicado");
         }
+        
+        if (!text || text.trim().length === 0) {
+          return {};
+        }
+        
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            return JSON.parse(text);
+          } catch (jsonErr) {
+            console.error("JSON parsing error in addUsers:", jsonErr);
+            console.error("Response text:", text.substring(0, 500));
+            throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+          }
+        }
+        
+        return {};
       })
       .then((created) => {
         // atualizar lista após criar (recarregar página atual)
@@ -106,7 +156,7 @@ const Users = () => {
         fetchApiUsers(pageSize, current);
       })
       .catch((error) => {
-        console.error("Error:", error);
+        console.error("Error creating user:", error);
       });
   };
 

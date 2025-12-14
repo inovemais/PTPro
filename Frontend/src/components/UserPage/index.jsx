@@ -52,14 +52,39 @@ const UserPage = () => {
       headers: { Accept: "application/json" },
       credentials: "include",
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}, body: ${errorText.substring(0, 200)}`);
+        }
+        
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
+        }
+        
+        const text = await res.text();
+        if (!text || text.trim().length === 0) {
+          throw new Error("Empty response from server");
+        }
+        
+        try {
+          return JSON.parse(text);
+        } catch (jsonErr) {
+          console.error("JSON parsing error in fetchTickets:", jsonErr);
+          console.error("Response text:", text.substring(0, 500));
+          throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+        }
+      })
       .then((response) => {
         if (response.auth && response.tickets) {
           setTickets(response.tickets);
         }
         setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("Erro ao carregar bilhetes:", err);
         setLoading(false);
       });
   };
@@ -69,7 +94,31 @@ const UserPage = () => {
       headers: { Accept: "application/json" },
       credentials: "include",
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}, body: ${errorText.substring(0, 200)}`);
+        }
+        
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
+        }
+        
+        const text = await res.text();
+        if (!text || text.trim().length === 0) {
+          throw new Error("Empty response from server");
+        }
+        
+        try {
+          return JSON.parse(text);
+        } catch (jsonErr) {
+          console.error("JSON parsing error in fetchMemberRequests:", jsonErr);
+          console.error("Response text:", text.substring(0, 500));
+          throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+        }
+      })
       .then((response) => {
         if (response.auth && response.requests) {
           const pendingRequest = response.requests.find(
@@ -78,7 +127,9 @@ const UserPage = () => {
           setMemberRequest(pendingRequest || null);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Erro ao carregar pedidos de membro:", err);
+      });
   };
 
   const fetchUserInfo = () => {
@@ -86,7 +137,31 @@ const UserPage = () => {
       headers: { Accept: "application/json" },
       credentials: "include",
     })
-      .then((res) => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`HTTP error! status: ${res.status}, body: ${errorText.substring(0, 200)}`);
+        }
+        
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
+        }
+        
+        const text = await res.text();
+        if (!text || text.trim().length === 0) {
+          throw new Error("Empty response from server");
+        }
+        
+        try {
+          return JSON.parse(text);
+        } catch (jsonErr) {
+          console.error("JSON parsing error in fetchUserInfo:", jsonErr);
+          console.error("Response text:", text.substring(0, 500));
+          throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+        }
+      })
       .then((response) => {
         if (response.auth && response.decoded) {
           const role = response.decoded.role || response.decoded;
@@ -95,7 +170,9 @@ const UserPage = () => {
           setIsMember(hasMemberScope);
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("Erro ao carregar informações do utilizador:", err);
+      });
   };
 
   // Funções responsáveis por mostrar notificações ao utilizador
@@ -241,13 +318,39 @@ const UserPage = () => {
       method: "POST",
       credentials: "include",
     })
-      .then((res) => {
+      .then(async (res) => {
+        const contentType = res.headers.get("content-type");
+        const text = await res.text();
+        
         if (!res.ok) {
-          return res.json().then((data) => {
-            throw new Error(data.error || "Failed to submit request");
-          });
+          let errorData;
+          if (contentType && contentType.includes("application/json") && text) {
+            try {
+              errorData = JSON.parse(text);
+            } catch {
+              errorData = { error: text.substring(0, 200) };
+            }
+          } else {
+            errorData = { error: text.substring(0, 200) || "Failed to submit request" };
+          }
+          throw new Error(errorData.error || "Failed to submit request");
         }
-        return res.json();
+        
+        if (!text || text.trim().length === 0) {
+          return {};
+        }
+        
+        if (contentType && contentType.includes("application/json")) {
+          try {
+            return JSON.parse(text);
+          } catch (jsonErr) {
+            console.error("JSON parsing error in requestMembership:", jsonErr);
+            console.error("Response text:", text.substring(0, 500));
+            throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+          }
+        }
+        
+        return {};
       })
       .then(() => {
         setAlertMessage("Membership request submitted successfully!");
@@ -258,6 +361,7 @@ const UserPage = () => {
         setTimeout(() => setShowAlert(false), 5000);
       })
       .catch((err) => {
+        console.error("Erro ao submeter pedido de membro:", err);
         setAlertMessage(err.message || "Error submitting request");
         setAlertType("danger");
         setShowAlert(true);

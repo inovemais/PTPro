@@ -26,7 +26,31 @@ export const useGetData = (url = "", pageSize, current) => {
       headers: { Accept: "application/json" },
       credentials: "include",
     })
-    .then((response) => response.json())
+    .then(async (response) => {
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, body: ${errorText.substring(0, 200)}`);
+      }
+      
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
+      }
+      
+      const text = await response.text();
+      if (!text || text.trim().length === 0) {
+        throw new Error("Empty response from server");
+      }
+      
+      try {
+        return JSON.parse(text);
+      } catch (jsonErr) {
+        console.error("JSON parsing error in useGetData:", jsonErr);
+        console.error("Response text:", text.substring(0, 500));
+        throw new Error(`Invalid JSON response: ${jsonErr.message}`);
+      }
+    })
     .then((response) => {
       const { data = [], pagination } = response;
       const auth = response.auth;
@@ -43,7 +67,7 @@ export const useGetData = (url = "", pageSize, current) => {
       }
     })
     .catch((error) => {
-      console.error("Error:", error);
+      console.error("Error in useGetData:", error);
       setError(error);
     })
     .finally(() => {
