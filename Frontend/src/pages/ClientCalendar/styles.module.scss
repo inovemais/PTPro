@@ -1,0 +1,16 @@
+.container {
+  padding: 2rem;
+}
+
+.logsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.logItem {
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+}
+
