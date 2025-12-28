@@ -1,6 +1,24 @@
 const Users = require('../data/users');
 
 module.exports = (req, res, next) => {
+    // Lista de rotas públicas que não requerem autenticação
+    const publicRoutes = [
+        '/register',
+        '/register/admin',
+        '/login',
+        '/qr-code/login'
+    ];
+    
+    // Verificar se a rota atual é pública
+    const isPublicRoute = publicRoutes.some(route => {
+        return req.path === route || req.path.startsWith(route + '/');
+    });
+    
+    if (isPublicRoute) {
+        console.log('✅ Public route, skipping token verification:', req.path);
+        return next();
+    }
+    
     console.log('🔐 Token middleware - Request received');
     console.log('🔐 Request method:', req.method);
     console.log('🔐 Request path:', req.path);

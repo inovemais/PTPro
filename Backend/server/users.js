@@ -277,7 +277,7 @@ const UsersRouter = (io) => {
     .get(
       Users.autorize([scopes.Admin, scopes.Member, scopes.NonMember]),
       function (req, res, next) {
-        console.log("get all tickets");
+        console.log("get all members");
 
         const pageLimit = req.query.limit ? parseInt(req.query.limit) : 5;
         const pageSkip = req.query.skip ? parseInt(req.query.skip) : 0;

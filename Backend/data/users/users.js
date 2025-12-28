@@ -1,6 +1,5 @@
 let mongoose = require("mongoose");
 let scopes = require("./scopes");
-let TicketSchema = require("../tickets/ticket");
 let Member = require("../member/member");
 
 let Schema = mongoose.Schema;
@@ -10,7 +9,15 @@ let RoleSchema = new Schema({
   scope: [
     {
       type: String,
-      enum: [scopes.Admin, scopes.Member, scopes.NonMember, scopes.Anonimous],
+      enum: [
+        scopes.Admin,
+        scopes.Member,
+        scopes.NonMember,
+        scopes.Anonimous,
+        // novos perfis para o domínio de Personal Trainers
+        scopes.PersonalTrainer,
+        scopes.Client,
+      ],
     },
   ],
 });
@@ -18,23 +25,29 @@ let RoleSchema = new Schema({
 // create a schema
 let UserSchema = new Schema({
   name: { type: String, required: true, unique: true },
+  firstName: { type: String },
+  lastName: { type: String },
   email: { type: String, required: true, unique: true },
+  phone: { type: String },
+  dateOfBirth: { type: Date },
   password: { type: String, required: true },
   role: { type: RoleSchema },
   age: { type: Number },
-  address: { type: String, required: true },
-  country: { type: String, required: true },
-  taxNumber: { type: Number, required: true, unique: true },
+  address: { type: String },
+  country: { type: String },
+  taxNumber: { type: Number, unique: true, sparse: true },
   memberId: { type: mongoose.Schema.Types.ObjectId, required: false, ref: "Member" },
-  tickets: [
-    { type: mongoose.Schema.Types.ObjectId, required: true, ref: "Ticket" },
-  ],
 });
 
 // Middleware para criar automaticamente um membro quando um utilizador é criado
 UserSchema.pre('save', async function(next) {
   // Se já tem memberId, não criar novo membro
   if (this.memberId) {
+    return next();
+  }
+
+  // Se não tem taxNumber, não criar membro automaticamente
+  if (!this.taxNumber) {
     return next();
   }
 

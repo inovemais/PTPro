@@ -15,9 +15,8 @@ let swaggerUi, swaggerSpec;
 try {
   swaggerUi = require('swagger-ui-express');
   swaggerSpec = require('./swagger');
-  console.log('✅ Swagger loaded');
 } catch (swaggerError) {
-  console.error('❌ Error loading Swagger:', swaggerError.message);
+  console.error('Error loading Swagger:', swaggerError.message);
   // Não bloquear o servidor se Swagger falhar
   swaggerUi = null;
   swaggerSpec = null;
@@ -30,35 +29,23 @@ const config = require('./config');
 const port = parseInt(process.env.PORT) || parseInt(config.port) || 3000;
 const hostname = ("RENDER" in process.env) ? "0.0.0.0" : config.hostname; // 0.0.0.0 on Render
 
-console.log('🚀 Starting server...');
-console.log(`📌 Port: ${port}`);
-console.log(`📌 Hostname: ${hostname}`);
-console.log(`📌 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
-console.log(`📌 RENDER: ${"RENDER" in process.env ? 'Yes' : 'No'}`);
-
 // Conectar ao MongoDB (não bloquear o servidor se falhar)
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || config.db;
-console.log(`📌 MongoDB URI: ${mongoUri ? 'Set' : 'Not set'}`);
 
-mongoose.connect(mongoUri)
-  .then(() => console.log('✅ MongoDB connection successful!'))
-  .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
-    // Não bloquear o servidor, mas avisar
-  });
+mongoose.connect(mongoUri).catch((err) => {
+  console.error('MongoDB connection error:', err.message);
+  // Não bloquear o servidor, mas avisar
+});
 
-console.log('📦 Loading router...');
 let router;
 try {
   router = require('./router');
-  console.log('✅ Router loaded');
 } catch (error) {
-  console.error('❌ Error loading router:', error);
+  console.error('Error loading router:', error);
   throw error; // Se o router não carregar, não podemos continuar
 }
 
 const app = express();
-console.log('✅ Express app created');
 
 // Handler CRÍTICO para OPTIONS (preflight) - DEVE SER O ABSOLUTAMENTE PRIMEIRO
 // Este handler deve responder a TODAS as requisições OPTIONS antes de qualquer outro middleware
@@ -66,8 +53,7 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') {
     try {
       const origin = req.headers.origin || '*';
-      console.log(`🔄 OPTIONS preflight request from: ${origin} to ${req.path}`);
-      
+
       // SEMPRE permitir OPTIONS - o CORS real será verificado na requisição real
       // Usar writeHead para garantir que os headers sejam definidos antes de qualquer resposta
       res.writeHead(200, {
@@ -79,10 +65,8 @@ app.use((req, res, next) => {
         'Content-Length': '0'
       });
       
-      console.log(`✅ OPTIONS preflight responded with 200 for: ${origin}`);
       return res.end();
     } catch (err) {
-      console.error('❌ Error in OPTIONS handler:', err);
       // Mesmo em caso de erro, tentar enviar resposta
       try {
         res.writeHead(200, {
@@ -93,7 +77,6 @@ app.use((req, res, next) => {
         });
         return res.end();
       } catch (e) {
-        console.error('❌ Failed to send OPTIONS response:', e);
         return res.status(200).end();
       }
     }
@@ -135,25 +118,17 @@ const isAllowedOrigin = (origin) => {
 
 const corsOptions = {
   origin: (origin, callback) => {
-    console.log(`🌐 CORS check - Origin: ${origin || 'none'}`);
-    console.log(`🌐 Environment: ${isDevelopment ? 'development' : 'production'}`);
-    console.log(`🌐 Render: ${isRender ? 'Yes' : 'No'}`);
-    
     try {
       if (isAllowedOrigin(origin)) {
-        console.log(`✅ CORS allowed for origin: ${origin || 'none'}`);
         return callback(null, true);
       }
-      console.log(`❌ CORS blocked for origin: ${origin || 'none'}`);
-      console.log(`📋 Allowed origins: ${allowedOrigins.join(', ') || 'All localhost in dev'}`);
       // Em produção no Render, se a origem não estiver na lista mas for HTTPS, permitir
       if (isRender && origin && origin.startsWith('https://')) {
-        console.log(`⚠️  Render production: Allowing HTTPS origin: ${origin}`);
         return callback(null, true);
       }
       return callback(new Error('Not allowed by CORS'));
     } catch (err) {
-      console.error('❌ Error in CORS origin check:', err);
+      console.error('Error in CORS origin check:', err);
       // Em caso de erro, permitir em desenvolvimento
       if (isDevelopment) {
         return callback(null, true);
@@ -170,11 +145,8 @@ const corsOptions = {
 // IMPORTANTE: CORS deve ser aplicado ANTES de qualquer outro middleware
 app.use(cors(corsOptions));
 
-// Middleware de logging para debug (antes do router) - pular OPTIONS já tratadas
+// Middleware sem logs (antes do router) - pular OPTIONS já tratadas
 app.use((req, res, next) => {
-  if (req.method !== 'OPTIONS') {
-    console.log(`📥 ${req.method} ${req.path} - Origin: ${req.headers.origin || 'none'}`);
-  }
   next();
 });
 
@@ -212,13 +184,12 @@ if (swaggerUi && swaggerSpec) {
     // swaggerUi.serve serve os ficheiros estáticos (CSS, JS)
     // swaggerUi.setup configura a UI com o spec
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
-    console.log('✅ Swagger UI configured');
   } catch (swaggerError) {
-    console.error('❌ Error configuring Swagger UI:', swaggerError);
+    console.error('Error configuring Swagger UI:', swaggerError);
     // Não bloquear o servidor se Swagger falhar
   }
 } else {
-  console.log('⚠️  Swagger UI not available (failed to load)');
+  // Swagger UI não disponível, seguir sem documentação interativa
 }
 
 // Criar servidor HTTP
@@ -237,17 +208,15 @@ const io = socketio(server, {
 app.set('io', io);
 
 // Inicializar router passando io
-console.log('📦 Initializing router with Socket.IO...');
 try {
   const apiRouter = router.init(io);
   app.use('/api', apiRouter);
-  console.log('✅ Router initialized');
 } catch (error) {
-  console.error('❌ Error initializing router:', error);
-  console.error('❌ Error stack:', error.stack);
+  console.error('Error initializing router:', error);
+  console.error('Error stack:', error.stack);
   // Não bloquear o servidor, mas criar um router de fallback
   app.use('/api', (req, res, next) => {
-    console.error(`❌ Router not available for ${req.method} ${req.path}`);
+    console.error(`Router not available for ${req.method} ${req.path}`);
     res.status(503).json({ 
       error: 'Service temporarily unavailable',
       message: 'Router initialization failed'
@@ -275,12 +244,12 @@ app.use((req, res, next) => {
 
 // Middleware de tratamento de erros global (deve ser o último)
 app.use((err, req, res, next) => {
-  console.error('❌ Error middleware caught:', err);
-  console.error('❌ Error name:', err.name);
-  console.error('❌ Error message:', err.message);
-  console.error('❌ Request method:', req.method);
-  console.error('❌ Request path:', req.path);
-  console.error('❌ Request origin:', req.headers.origin);
+  console.error('Error middleware caught:', err);
+  console.error('Error name:', err.name);
+  console.error('Error message:', err.message);
+  console.error('Request method:', req.method);
+  console.error('Request path:', req.path);
+  console.error('Request origin:', req.headers.origin);
   
   // Se a resposta já foi enviada, não fazer nada
   if (res.headersSent) {
@@ -289,7 +258,6 @@ app.use((err, req, res, next) => {
   
   // Se for uma requisição OPTIONS (preflight), sempre responder 200
   if (req.method === 'OPTIONS') {
-    console.log('✅ Handling OPTIONS error - returning 200');
     try {
       const origin = req.headers.origin || '*';
       res.writeHead(200, {
@@ -301,14 +269,14 @@ app.use((err, req, res, next) => {
       });
       return res.end();
     } catch (e) {
-      console.error('❌ Error sending OPTIONS response:', e);
+      console.error('Error sending OPTIONS response:', e);
       return res.status(200).end();
     }
   }
   
   // Se for erro de CORS, retornar 403 em vez de 500
   if (err.message && err.message.includes('CORS')) {
-    console.error('❌ CORS error detected');
+    console.error('CORS error detected');
     res.status(403).json({
       error: 'CORS policy violation',
       message: err.message
@@ -323,46 +291,32 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Eventos de conexão Socket.IO
-io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
-  });
-});
+// Eventos de conexão Socket.IO (sem logs verbosos)
+io.on('connection', () => {});
 
 // Iniciar servidor HTTP e WebSocket
 // IMPORTANTE: Sempre escutar na porta, mesmo se houver erros anteriores
-console.log('🎯 Starting server.listen()...');
-console.log(`🎯 Attempting to listen on ${hostname}:${port}`);
-
 try {
   server.listen(port, hostname, () => {
-    console.log(`✅✅✅ Server successfully running at http://${hostname}:${port} ✅✅✅`);
-    console.log('✅ Socket.IO server initialized');
-    console.log(`✅ Swagger UI available at http://${hostname}:${port}/api-docs`);
-    console.log(`✅ Allowed CORS origins: ${allowedOrigins.join(', ') || 'All'}`);
-    console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`✅ Render detected: ${"RENDER" in process.env ? 'Yes' : 'No'}`);
+    console.log(`Server running at http://${hostname}:${port}`);
   }).on('error', (err) => {
-    console.error('❌❌❌ Server listen error:', err);
-    console.error('❌ Error code:', err.code);
-    console.error('❌ Error message:', err.message);
+    console.error('Server listen error:', err);
+    console.error('Error code:', err.code);
+    console.error('Error message:', err.message);
     process.exit(1);
   });
 } catch (error) {
-  console.error('❌❌❌ Fatal error starting server:', error);
+  console.error('Fatal error starting server:', error);
   process.exit(1);
 }
 
 // Garantir que o processo não termine silenciosamente
 process.on('uncaughtException', (err) => {
-  console.error('❌ Uncaught Exception:', err);
+  console.error('Uncaught Exception:', err);
   // Não terminar o processo, apenas logar
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   // Não terminar o processo, apenas logar
 });

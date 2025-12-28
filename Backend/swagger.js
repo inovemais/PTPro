@@ -4,12 +4,12 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'EstadioPWA API',
+      title: 'PTPro API',
       version: '1.0.0',
-      description: 'API documentation for Estadio - Stadium Management System',
+      description: 'API documentation for PTPro - Personal Trainer Management System',
       contact: {
         name: 'API Support',
-        email: 'support@estadio.com'
+        email: 'support@ptpro.com'
       },
     },
     servers: [
@@ -88,13 +88,6 @@ const options = {
             memberId: {
               type: 'string',
               description: 'Reference to Member document'
-            },
-            tickets: {
-              type: 'array',
-              items: {
-                type: 'string'
-              },
-              description: 'Array of ticket IDs'
             }
           }
         },
@@ -116,122 +109,6 @@ const options = {
             userId: {
               type: 'string',
               description: 'Reference to User document'
-            }
-          }
-        },
-        Game: {
-          type: 'object',
-          properties: {
-            _id: {
-              type: 'string',
-              description: 'Game ID',
-              example: '507f1f77bcf86cd799439011'
-            },
-            name: {
-              type: 'string',
-              description: 'Game name',
-              example: 'FC Porto vs Benfica'
-            },
-            date: {
-              type: 'string',
-              format: 'date-time',
-              description: 'Game date and time',
-              example: '2024-12-25T20:00:00.000Z'
-            },
-            stadiumId: {
-              type: 'string',
-              description: 'Reference to Stadium document',
-              example: '507f1f77bcf86cd799439012'
-            },
-            image: {
-              type: 'string',
-              description: 'Game image URL',
-              example: '/uploads/games/game-1234567890.png'
-            }
-          }
-        },
-        Ticket: {
-          type: 'object',
-          properties: {
-            _id: {
-              type: 'string',
-              description: 'Ticket ID',
-              example: '507f1f77bcf86cd799439013'
-            },
-            sector: {
-              type: 'string',
-              description: 'Stadium sector',
-              example: 'Sector A'
-            },
-            price: {
-              type: 'number',
-              description: 'Ticket price',
-              example: 25.50
-            },
-            gameId: {
-              type: 'string',
-              description: 'Reference to Game document',
-              example: '507f1f77bcf86cd799439011'
-            },
-            userId: {
-              type: 'string',
-              description: 'Reference to User document',
-              example: '507f1f77bcf86cd799439014'
-            },
-            isMember: {
-              type: 'boolean',
-              description: 'Whether the ticket was purchased with member discount',
-              example: true
-            }
-          }
-        },
-        Stadium: {
-          type: 'object',
-          properties: {
-            _id: {
-              type: 'string',
-              description: 'Stadium ID',
-              example: '507f1f77bcf86cd799439012'
-            },
-            name: {
-              type: 'string',
-              description: 'Stadium name',
-              example: 'Estádio do Dragão'
-            },
-            sectors: {
-              type: 'array',
-              description: 'Stadium sectors with pricing',
-              items: {
-                type: 'object',
-                properties: {
-                  sector: {
-                    type: 'string',
-                    example: 'Sector A'
-                  },
-                  price: {
-                    type: 'number',
-                    description: 'Regular ticket price',
-                    example: 30.00
-                  },
-                  priceMember: {
-                    type: 'number',
-                    description: 'Member ticket price',
-                    example: 25.00
-                  }
-                }
-              },
-              example: [
-                {
-                  sector: 'Sector A',
-                  price: 30.00,
-                  priceMember: 25.00
-                },
-                {
-                  sector: 'Sector B',
-                  price: 25.00,
-                  priceMember: 20.00
-                }
-              ]
             }
           }
         },
@@ -309,7 +186,7 @@ const options = {
               type: 'string',
               format: 'email',
               description: 'User email (must be unique)',
-              example: 'admin@estadio.com'
+              example: 'admin@ptpro.com'
             },
             password: {
               type: 'string',
@@ -406,18 +283,6 @@ const options = {
       {
         name: 'Users',
         description: 'User management endpoints'
-      },
-      {
-        name: 'Games',
-        description: 'Game management endpoints'
-      },
-      {
-        name: 'Tickets',
-        description: 'Ticket management endpoints'
-      },
-      {
-        name: 'Stadium',
-        description: 'Stadium management endpoints'
       },
       {
         name: 'Member Requests',
