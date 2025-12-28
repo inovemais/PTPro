@@ -1,70 +1,72 @@
-# Getting Started with Create React App
+# PTPro Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Aplicação React para gestão de ginásios/boxes de fitness.
 
-## Available Scripts
+Este projeto foi criado com [Vite](https://vitejs.dev/) e utiliza React com TypeScript.
 
-In the project directory, you can run:
+## Scripts Disponíveis
 
-### `npm start`
+No diretório do projeto, pode executar:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### `npm run dev`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Executa a aplicação em modo de desenvolvimento.\
+A aplicação estará disponível em [http://localhost:5173](http://localhost:5173).
+
+A página recarrega automaticamente quando faz alterações.\
+Também pode ver erros de lint na consola.
 
 ### `npm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Executa os testes com Vitest em modo watch interativo.
 
 ### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Compila a aplicação para produção na pasta `dist`.\
+A aplicação é compilada em modo produção e otimizada para melhor performance.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+O build é minificado e os nomes dos ficheiros incluem hashes.\
+A aplicação está pronta para ser deployada!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### `npm run vercel-build`
 
-### `npm run eject`
+Script específico para build no Vercel (instala dependências com `--legacy-peer-deps` e executa o build).
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## Tecnologias
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- **React 18** - Biblioteca JavaScript para construção de interfaces
+- **TypeScript** - Superset tipado do JavaScript
+- **Vite** - Build tool e dev server rápido
+- **React Router** - Roteamento para React
+- **SCSS** - Pré-processador CSS
+- **Socket.IO Client** - Cliente WebSocket para comunicação em tempo real
+- **React Hook Form** - Biblioteca para gestão de formulários
+- **React Toastify** - Notificações toast
+- **HTML5 QRCode** - Leitura de QR Codes
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Estrutura do Projeto
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```
+Frontend/
+├── public/           # Ficheiros públicos estáticos
+├── src/
+│   ├── components/   # Componentes React
+│   ├── config/       # Configurações (API, etc)
+│   ├── context/      # Contextos React (Auth, Theme)
+│   ├── hooks/        # Custom hooks
+│   ├── socket/       # Configuração do Socket.IO
+│   ├── styles/       # Estilos globais e variáveis SCSS
+│   └── App.jsx       # Componente principal
+└── vite.config.js    # Configuração do Vite
+```
 
-## Learn More
+## Configuração da API
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+A configuração da API está em `src/config/api.js`. Certifique-se de que está configurada corretamente para apontar para o backend.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Mais Informações
 
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Para saber mais sobre:
+- **Vite**: [Documentação do Vite](https://vitejs.dev/)
+- **React**: [Documentação do React](https://react.dev/)
+- **React Router**: [Documentação do React Router](https://reactrouter.com/)

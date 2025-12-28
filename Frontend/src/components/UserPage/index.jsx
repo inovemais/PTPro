@@ -10,10 +10,10 @@ import addNotification from "react-push-notification";
 import { buildApiUrl } from "../../config/api";
 import styles from "./styles.module.scss";
 import Table from "../Table";
+import ClientCalendar from "../ClientCalendar";
 
 const UserPage = () => {
   const { isValidLogin } = useAuth();
-  const [tickets, setTickets] = useState([]);
   const [memberRequest, setMemberRequest] = useState(null);
   const [isMember, setIsMember] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -29,7 +29,6 @@ const UserPage = () => {
 
   useEffect(() => {
     if (isValidLogin) {
-      fetchTickets();
       fetchMemberRequests();
       fetchUserInfo();
     }
@@ -47,54 +46,6 @@ const UserPage = () => {
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
   }, [isValidLogin]);
-
-  const fetchTickets = () => {
-    const token = localStorage.getItem("token");
-    const headers = { Accept: "application/json" };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    fetch(buildApiUrl("/api/tickets?limit=100&skip=0"), {
-      headers: headers,
-      credentials: "include",
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`HTTP error! status: ${res.status}, body: ${errorText.substring(0, 200)}`);
-        }
-        
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          const text = await res.text();
-          throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
-        }
-        
-        const text = await res.text();
-        if (!text || text.trim().length === 0) {
-          throw new Error("Empty response from server");
-        }
-        
-        try {
-          return JSON.parse(text);
-        } catch (jsonErr) {
-          console.error("JSON parsing error in fetchTickets:", jsonErr);
-          console.error("Response text:", text.substring(0, 500));
-          throw new Error(`Invalid JSON response: ${jsonErr.message}`);
-        }
-      })
-      .then((response) => {
-        if (response.auth && response.tickets) {
-          setTickets(response.tickets);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Erro ao carregar bilhetes:", err);
-        setLoading(false);
-      });
-  };
 
   const fetchMemberRequests = () => {
     const token = localStorage.getItem("token");
@@ -195,38 +146,6 @@ const UserPage = () => {
   };
 
   // Funções responsáveis por mostrar notificações ao utilizador
-  const showGameCreatedNotification = useCallback((data) => {
-    const gameName = data.game?.name || "Novo jogo";
-    const gameDate = data.game?.date ? new Date(data.game.date).toLocaleDateString('pt-PT') : '';
-    const message = gameDate 
-      ? `🎮 Novo jogo: ${gameName} (${gameDate})`
-      : `🎮 Novo jogo: ${gameName}`;
-    
-    // Toast notification
-    toast.info(message, {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-    });
-    
-    // Push notification
-    addNotification({
-      title: "Novo Jogo Criado",
-      message: message,
-      theme: "darkblue",
-      native: true, // Usa notificações nativas do navegador
-      duration: 5000,
-    });
-    
-    console.log("New game created:", data);
-    
-    // Atualizar lista de tickets se necessário
-    fetchTickets();
-  }, [fetchTickets]);
-
   const showMemberCreatedNotification = useCallback((data) => {
     const userName = data.user?.name || "Novo membro";
     const message = `👤 Parabéns, ${userName}! Agora és membro.`;
@@ -318,18 +237,14 @@ const UserPage = () => {
   useEffect(() => {
     if (!isValidLogin) return;
 
-    // Listener para quando um novo jogo é criado
-    socketAddListener("game:created", showGameCreatedNotification);
-
     // Listener para quando um novo membro é criado
     socketAddListener("member:created", showMemberCreatedNotification);
 
     // Cleanup: remover listeners ao desmontar
     return () => {
-      socketRemoveListener("game:created");
       socketRemoveListener("member:created");
     };
-  }, [isValidLogin, socketAddListener, socketRemoveListener, showGameCreatedNotification, showMemberCreatedNotification]);
+  }, [isValidLogin, socketAddListener, socketRemoveListener, showMemberCreatedNotification]);
 
   const requestMembership = () => {
     const token = localStorage.getItem("token");
@@ -440,70 +355,10 @@ const UserPage = () => {
         </Row>
       )}
 
+      {/* Secção de planos de treino em estilo calendário para o cliente */}
       <Row className={styles.section}>
         <Col>
-          <Card>
-            <CardBody>
-              <CardTitle tag="h3">Membership</CardTitle>
-              {isMember ? (
-                <div>
-                  <p>
-                    <span className={`badge bg-success`}>Member</span>
-                  </p>
-                  <p className="text-success">
-                    You are a member! You enjoy reduced prices on all events.
-                  </p>
-                </div>
-              ) : memberRequest ? (
-                <div>
-                  <p>
-                    Your membership request status:{" "}
-                    {getRequestStatusBadge(memberRequest.status)}
-                  </p>
-                  {memberRequest.status === "pending" && (
-                    <p className="text-muted">
-                      Your request is being reviewed by an administrator.
-                    </p>
-                  )}
-                  {memberRequest.status === "rejected" && memberRequest.reason && (
-                    <p className="text-danger">
-                      <strong>Reason:</strong> {memberRequest.reason}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div>
-                  <p>
-                    Become a member to get discounts on tickets! Members enjoy
-                    reduced prices on all events.
-                  </p>
-                  <Button color="primary" onClick={requestMembership}>
-                    Request Membership
-                  </Button>
-                </div>
-              )}
-            </CardBody>
-          </Card>
-        </Col>
-      </Row>
-
-      <Row className={styles.section}>
-        <Col>
-          <Card>
-            <CardBody>
-              <CardTitle tag="h3">My Tickets</CardTitle>
-              {loading ? (
-                <p>Loading tickets...</p>
-              ) : tickets.length === 0 ? (
-                <p>You don't have any tickets yet.</p>
-              ) : (
-                <Table
-                  columns={["sector", "price", "gameId", "isMember"]}
-                  rows={tickets}
-                />
-              )}
-            </CardBody>
-          </Card>
+          <ClientCalendar />
         </Col>
       </Row>
     </Container>

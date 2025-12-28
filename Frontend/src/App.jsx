@@ -2,6 +2,7 @@ import {
   createBrowserRouter,
   RouterProvider,
   Outlet,
+  useLocation,
 } from "react-router-dom";
 import styles from "./App.module.scss";
 import HomePage from "./components/HomePage";
@@ -9,15 +10,19 @@ import AdminPage from "./components/AdminPage/index.jsx";
 import Header from "./components/Header/index.jsx";
 import ProtectedRoute from "./components/ProtectRoute/index.jsx";
 import UserPage from "./components/UserPage/index.jsx";
-import PublicGamesPage from "./components/PublicGamesPage/index.jsx";
+import RegisterPage from "./components/RegisterPage";
+import TrainerDashboard from "./components/TrainerDashboard";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 // Layout component que inclui o Header
 function Layout() {
+  const location = useLocation();
+  const hideHeader = location.pathname === "/admin";
+  
   return (
     <div className={styles.App}>
-      <Header />
+      {!hideHeader && <Header />}
       <main>
         <Outlet />
       </main>
@@ -35,8 +40,8 @@ function App() {
           element: <HomePage />
         },
         {
-          path: "/games",
-          element: <PublicGamesPage />
+          path: "/register",
+          element: <RegisterPage />
         },
         {
           path: "/admin",
@@ -45,6 +50,10 @@ function App() {
         {
           path: "/user",
           element: <ProtectedRoute><UserPage /></ProtectedRoute>
+        },
+        {
+          path: "/trainer",
+          element: <ProtectedRoute><TrainerDashboard /></ProtectedRoute>
         },
       ]
     },

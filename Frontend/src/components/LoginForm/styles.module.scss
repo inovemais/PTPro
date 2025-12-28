@@ -1,38 +1,147 @@
+@import "../../styles/variables";
+@import "../../styles/mixins";
+
 .loginForm {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: $spacing-xl;
+    background-color: $bg-secondary;
+}
+
+.loginContainer {
+    width: 100%;
+    max-width: 420px;
+    background: $bg-primary;
+    border-radius: $radius-xl;
+    padding: $spacing-3xl;
+    box-shadow: $shadow-xl;
+}
+
+.logoSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: $spacing-3xl;
+}
+
+.logoIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: $radius-lg;
+    @include gradient-primary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: $spacing-lg;
+    box-shadow: $shadow-md;
+    
+    svg {
+        width: 40px;
+        height: 40px;
+        color: white;
+    }
+}
+
+.logoTitle {
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0;
+    margin-bottom: $spacing-xs;
+}
+
+.logoSubtitle {
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    margin: 0;
 }
 
 .formLogin {
-    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-lg;
 }
 
 .field {
-    margin-bottom: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-sm;
+}
 
-    .label {
-        width: 100px;
+.label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $text-primary;
+}
+
+.input {
+    @include input-base;
+    padding: $spacing-md $spacing-lg;
+    font-size: $font-size-base;
+}
+
+.submitButton {
+    @include button-primary;
+    width: 100%;
+    padding: $spacing-md $spacing-lg;
+    border-radius: $radius-md;
+    font-size: $font-size-base;
+    margin-top: $spacing-md;
+}
+
+.registerLink {
+    text-align: center;
+    margin-top: $spacing-lg;
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    
+    .registerLinkText {
+        color: $primary-color;
+        text-decoration: none;
+        font-weight: $font-weight-medium;
+        transition: color $transition-base;
+        
+        &:hover {
+            color: darken($primary-color, 10%);
+            text-decoration: underline;
+        }
     }
 }
 
 .loginModeButtons {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: $spacing-md;
+    margin-bottom: $spacing-xl;
     justify-content: center;
 }
 
 .modeButton {
     min-width: 150px;
+    padding: $spacing-sm $spacing-lg;
+    border: 2px solid #E5E7EB;
+    background: $bg-primary;
+    border-radius: $radius-md;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $text-secondary;
+    transition: all $transition-base;
     
     &.active {
-        opacity: 1;
-        font-weight: bold;
+        border-color: $primary-color;
+        color: $primary-color;
+        background: rgba(99, 102, 241, 0.05);
     }
     
     &:not(.active) {
         opacity: 0.7;
+        
+        &:hover {
+            opacity: 1;
+            border-color: $text-light;
+        }
     }
 }
 
@@ -42,25 +151,61 @@
 
 .qrCodeSection {
     text-align: center;
-    padding: 2rem;
+    padding: $spacing-xl;
 }
 
 .qrCodeContainer {
     display: flex;
     justify-content: center;
-    padding: 1rem;
-    background: white;
-    border-radius: 8px;
-    margin: 1.5rem 0;
+    padding: $spacing-lg;
+    background: $bg-primary;
+    border-radius: $radius-lg;
+    margin: $spacing-xl 0;
+    box-shadow: $shadow-md;
 }
 
 .qrCodeImage {
     max-width: 300px;
     height: auto;
-    border: 2px solid #ddd;
-    border-radius: 8px;
+    border: 2px solid #E5E7EB;
+    border-radius: $radius-lg;
 }
 
 .closeButton {
-    margin-top: 1rem;
+    margin-top: $spacing-lg;
+    @include button-primary;
+    padding: $spacing-md $spacing-xl;
+    border-radius: $radius-md;
+}
+
+.demoAccounts {
+    margin-top: $spacing-3xl;
+    padding-top: $spacing-3xl;
+    border-top: 1px solid #E5E7EB;
+}
+
+.demoAccountsTitle {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+}
+
+.demoAccountItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $spacing-sm 0;
+    font-size: $font-size-sm;
+    color: $text-secondary;
+    
+    .role {
+        font-weight: $font-weight-medium;
+        color: $text-primary;
+    }
+    
+    .email {
+        color: $text-secondary;
+        font-family: 'Courier New', monospace;
+    }
 }

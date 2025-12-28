@@ -1,0 +1,152 @@
+@import "../../styles/variables";
+@import "../../styles/mixins";
+
+.registerFormContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: $spacing-xl;
+  background-color: $bg-secondary;
+}
+
+.registerForm {
+  width: 100%;
+  max-width: 800px;
+  background: $bg-primary;
+  border-radius: $radius-xl;
+  padding: $spacing-3xl;
+  box-shadow: $shadow-xl;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: $spacing-3xl;
+}
+
+.title {
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: $text-primary;
+  margin: 0 0 $spacing-sm 0;
+}
+
+.subtitle {
+  font-size: $font-size-base;
+  color: $text-secondary;
+  margin: 0;
+}
+
+.formRegister {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2xl;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  padding: $spacing-xl;
+  background: rgba(99, 102, 241, 0.02);
+  border-radius: $radius-lg;
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $text-primary;
+  margin: 0 0 $spacing-md 0;
+  padding-bottom: $spacing-sm;
+  border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-lg;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.required {
+  color: $error-color;
+  margin-left: $spacing-xs;
+}
+
+.input {
+  @include input-base;
+  padding: $spacing-md $spacing-lg;
+  font-size: $font-size-base;
+  width: 100%;
+  transition: all $transition-base;
+  
+  &:focus {
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    outline: none;
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.inputError {
+  border-color: $error-color !important;
+  
+  &:focus {
+    border-color: $error-color !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+  }
+}
+
+.errorMessage {
+  font-size: $font-size-sm;
+  color: $error-color;
+  margin-top: $spacing-xs;
+  display: block;
+}
+
+.submitButton {
+  @include button-primary;
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  margin-top: $spacing-lg;
+  transition: all $transition-base;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: $shadow-lg;
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+

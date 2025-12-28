@@ -1,0 +1,65 @@
+// Mixins úteis para o design system
+
+@mixin gradient-primary {
+  background: linear-gradient(135deg, $primary-gradient-start 0%, $primary-gradient-end 100%);
+}
+
+@mixin card-shadow {
+  box-shadow: $shadow-md;
+}
+
+@mixin input-focus {
+  outline: none;
+  border-color: $primary-color;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+@mixin button-primary {
+  @include gradient-primary;
+  color: $text-white;
+  border: none;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+  
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: $shadow-lg;
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+@mixin input-base {
+  width: 100%;
+  padding: $spacing-md;
+  border: 1px solid #E5E7EB;
+  border-radius: $radius-md;
+  font-size: $font-size-base;
+  font-family: $font-family-primary;
+  transition: all $transition-base;
+  background-color: $bg-primary;
+  color: $text-primary;
+  
+  &:focus {
+    @include input-focus;
+  }
+  
+  &::placeholder {
+    color: $text-light;
+  }
+  
+  &:disabled {
+    background-color: $bg-secondary;
+    cursor: not-allowed;
+  }
+}
+

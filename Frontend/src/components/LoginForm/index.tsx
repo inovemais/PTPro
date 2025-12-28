@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { Row, Col } from "reactstrap";
 import styles from "./styles.module.scss";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { useState } from "react";
 import QRCodeLogin from "../QRCodeLogin";
 import { buildApiUrl } from "../../config/api";
@@ -102,8 +102,7 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
       } else {
         console.error("❌ CRITICAL: No token in response body!");
         console.error("❌ Response body:", JSON.stringify(body, null, 2));
-        console.error("❌ This means the token will not be available for subsequent requests");
-        console.error("❌ Authentication will fail unless cookie is working");
+        
       }
       
       // Verificar se auth é true (mesmo que não tenha token explícito, o cookie pode estar setado)
@@ -216,88 +215,118 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
   }
 
   return (
-    <Row className="d-flex align-items-center justify-content-center">
-      <Col md={8} lg={6}>
-        <div className={styles.loginForm}>
-          <h2>{title}</h2>
-          
-          {qrCode ? (
-            // Mostrar QR code após login
-            <div className={styles.loginContent}>
-              <div className={styles.qrCodeSection}>
-                <h3>Your Login QR Code</h3>
-                <div className={styles.qrCodeContainer}>
-                  <img src={qrCode} alt="Your Login QR Code" className={styles.qrCodeImage} />
-                </div>
-                <button 
-                  onClick={handleCloseQRCode} 
-                  className={`btn btn-primary ${styles.closeButton}`}
-                >
-                  Continue to Dashboard
-                </button>
-              </div>
-            </div>
-          ) : (
-            // Formulário de login
-            <>
-              {/* Botões para escolher modo de login */}
-              <div className={styles.loginModeButtons}>
-                <input
-                  type="button"
-                  value="Username/Password"
-                  onClick={() => setLoginMode("form")}
-                  className={`submit ${styles.modeButton} ${loginMode === "form" ? styles.active : ""}`}
-                />
-                <input
-                  type="button"
-                  value="QR Code Login"
-                  onClick={() => setLoginMode("qr-scan")}
-                  className={`submit ${styles.modeButton} ${loginMode === "qr-scan" ? styles.active : ""}`}
-                />
-              </div>
-
-              <div className={styles.loginContent}>
-                {loginMode === "form" && (
-                  <form className={styles.formLogin} onSubmit={handleSubmit(onSubmit)}>
-                    <div className={styles.field}>
-                      <label className={styles.label} htmlFor="name">
-                        Name:
-                      </label>
-                      <input
-                        id="name"
-                        type="text"
-                        autoComplete="username"
-                        required
-                        {...register("name")}
-                        disabled={loading}
-                      />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label} htmlFor="password">
-                        Password:
-                      </label>
-                      <input
-                        id="password"
-                        type="password"
-                        autoComplete="current-password"
-                        required
-                        {...register("password")}
-                        disabled={loading}
-                      />
-                    </div>
-                    <input className="submit" type="submit" disabled={loading} />
-                  </form>
-                )}
-
-                {loginMode === "qr-scan" && (
-                  <QRCodeLogin onScanSuccess={handleQRScanSuccess} />
-                )}
-              </div>
-            </>
-          )}
+    <div className={styles.loginForm}>
+      <div className={styles.loginContainer}>
+        {/* Logo Section */}
+        <div className={styles.logoSection}>
+          <div className={styles.logoIcon}>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h1 className={styles.logoTitle}>PTPro</h1>
+          <p className={styles.logoSubtitle}>Sistema de Gestão de Ginásios</p>
         </div>
-      </Col>
-    </Row>
+        
+        {qrCode ? (
+          // Mostrar QR code após login
+          <div className={styles.loginContent}>
+            <div className={styles.qrCodeSection}>
+              <h3>Your Login QR Code</h3>
+              <div className={styles.qrCodeContainer}>
+                <img src={qrCode} alt="Your Login QR Code" className={styles.qrCodeImage} />
+              </div>
+              <button 
+                onClick={handleCloseQRCode} 
+                className={styles.closeButton}
+              >
+                Continue to Dashboard
+              </button>
+            </div>
+          </div>
+        ) : (
+          // Formulário de login
+          <>
+            {/* Botões para escolher modo de login */}
+            <div className={styles.loginModeButtons}>
+              <button
+                type="button"
+                onClick={() => setLoginMode("form")}
+                className={`${styles.modeButton} ${loginMode === "form" ? styles.active : ""}`}
+              >
+                User/Password
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginMode("qr-scan")}
+                className={`${styles.modeButton} ${loginMode === "qr-scan" ? styles.active : ""}`}
+              >
+                QR Code Login
+              </button>
+            </div>
+
+            <div className={styles.loginContent}>
+              {loginMode === "form" && (
+                <form className={styles.formLogin} onSubmit={handleSubmit(onSubmit)}>
+                  <div className={styles.field}>
+                    <label className={styles.label} htmlFor="name">
+                      Email
+                    </label>
+                    <input
+                      id="name"
+                      type="email"
+                      autoComplete="username"
+                      required
+                      placeholder="Insira o seu email"
+                      className={styles.input}
+                      {...register("name")}
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label} htmlFor="password">
+                      Palavra-passe
+                    </label>
+                    <input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      placeholder="Insira a sua palavra-passe"
+                      className={styles.input}
+                      {...register("password")}
+                      disabled={loading}
+                    />
+                  </div>
+                  <button 
+                    type="submit" 
+                    className={styles.submitButton}
+                    disabled={loading}
+                  >
+                    {loading ? "A iniciar sessão..." : "Iniciar Sessão"}
+                  </button>
+                  <div className={styles.registerLink}>
+                    <span>No account? </span>
+                    <Link to="/register" className={styles.registerLinkText}>
+                      Register
+                    </Link>
+                  </div>
+                </form>
+              )}
+
+              {loginMode === "qr-scan" && (
+                <QRCodeLogin onScanSuccess={handleQRScanSuccess} />
+              )}
+            </div>
+
+            
+            
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 

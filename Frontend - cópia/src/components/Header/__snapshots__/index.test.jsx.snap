@@ -1,0 +1,52 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`should render correctly with minimal props 1`] = `
+<div>
+  <nav
+    class="_navBar_b4135b navbar"
+  >
+    <div
+      class="container-fluid"
+    >
+      <div
+        class="_leftSection_b4135b"
+      >
+        <img
+          alt="Logo"
+          class="_logo_b4135b"
+          src="/logo192.png"
+        />
+        <span
+          class="_brand_b4135b navbar-brand"
+        >
+          PWD
+        </span>
+      </div>
+      <ul
+        class="_rightSection_b4135b navbar-nav"
+      >
+        <li
+          class="nav-item"
+        >
+          <a
+            class="_navLink_b4135b nav-link"
+            href="/"
+          >
+            Login
+          </a>
+        </li>
+        <li
+          class="nav-item"
+        >
+          <a
+            class="_navLink_b4135b nav-link"
+            href="/"
+          >
+            Register
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+</div>
+`;

@@ -1,11 +1,11 @@
-# EstadioPWA
+# PTPro
 
-Aplicação PWA (Progressive Web App) para gestão de estádios, jogos, bilhetes e membros.
+Aplicação PWA (Progressive Web App) para gestão de ginásios/boxes de fitness, treinadores, clientes e planos de treino.
 
 ## Estrutura do Projeto
 
 ```
-EstadioPWA/
+PTPro/
 ├── Backend/          # API Node.js/Express
 ├── Frontend/         # Aplicação React
 └── README.md
@@ -19,12 +19,20 @@ EstadioPWA/
 - MongoDB (Mongoose)
 - Socket.IO
 - Swagger/OpenAPI
+- JWT (JSON Web Tokens)
+- Bcrypt
+- Multer (upload de ficheiros)
+- QRCode
 
 ### Frontend
 - React
 - TypeScript
 - Vite
 - SCSS
+- React Router
+- Socket.IO Client
+- React Hook Form
+- React Toastify
 
 ## Instalação
 
@@ -68,6 +76,12 @@ cd Backend
 npm start
 ```
 
+Para desenvolvimento com auto-reload:
+```bash
+cd Backend
+npm run dev
+```
+
 O servidor estará disponível em `http://127.0.0.1:3000`
 A documentação Swagger estará disponível em `http://127.0.0.1:3000/api-docs`
 
@@ -77,18 +91,32 @@ cd Frontend
 npm run dev
 ```
 
-
+A aplicação estará disponível em `http://localhost:5173` (porta padrão do Vite)
 
 ## Funcionalidades
 
-- Gestão de utilizadores
-- Gestão de jogos
-- Gestão de bilhetes
-- Gestão de membros
-- Gestão de estádio e secções
-- Sistema de autenticação
-- Upload de imagens
-- API REST documentada com Swagger
-- WebSocket para comunicação em tempo real
+- **Gestão de Utilizadores**: Sistema completo de autenticação e autorização
+- **Gestão de Treinadores**: CRUD de treinadores
+- **Gestão de Clientes**: Gestão de clientes e seus dados
+- **Gestão de Planos de Treino**: Criação e gestão de planos de treino (workouts)
+- **Pedidos de Membros**: Sistema de pedidos de adesão de membros
+- **Pedidos de Mudança de Treinador**: Gestão de pedidos de mudança de treinador
+- **Mensagens**: Sistema de mensagens em tempo real
+- **Sistema de Autenticação**: Login/registro com JWT e autenticação por QR Code
+- **Upload de Imagens**: Sistema de upload de ficheiros
+- **API REST**: API documentada com Swagger/OpenAPI
+- **WebSocket**: Comunicação em tempo real com Socket.IO
+- **Dashboard para Treinadores**: Interface específica para treinadores
+- **Página de Administração**: Interface para administradores
+- **Página de Utilizador**: Interface para utilizadores/membros
 
-# PTPro
+## Estrutura de Rotas da API
+
+- `/auth` - Autenticação e autorização
+- `/users` - Gestão de utilizadores
+- `/trainers` - Gestão de treinadores
+- `/clients` - Gestão de clientes
+- `/workouts` - Gestão de planos de treino
+- `/member-requests` - Pedidos de membros
+- `/trainer-change-requests` - Pedidos de mudança de treinador
+- `/messages` - Mensagens em tempo real

@@ -43,3 +43,21 @@
         opacity: 0.8;
     }
 }
+
+.themeToggle {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.logoutButton {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    font-weight: 500;
+    
+    &:hover {
+        opacity: 0.8;
+        text-decoration: underline;
+    }
+}

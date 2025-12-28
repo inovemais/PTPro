@@ -1,98 +1,73 @@
 import React, { useState } from "react";
 import styles from "./styles.module.scss";
-import {
-  Row,
-  Container,
-  Nav,
-  NavItem,
-  NavLink,
-  TabContent,
-  TabPane,
-} from "reactstrap";
-import Games from "./components/Games/index.jsx";
-import Stadium from "./components/Stadium/index.jsx";
 import Users from "./components/Users/index.jsx";
-import Tickets from "./components/Tickets/index.jsx";
-import MemberRequests from "./components/MemberRequests/index.jsx";
 
 const navItems = [
   {
     id: "1",
     title: "Users",
-  },
-  {
-    id: "2",
-    title: "Stadium",
-  },
-  {
-    id: "3",
-    title: "Games",
-  },
-  {
-    id: "4",
-    title: "Tickets",
-  },
-  {
-    id: "5",
-    title: "Member Requests",
+    icon: (
+      <svg className={styles.navIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
   },
 ];
 
 const items = [
   {
     id: "1",
+    title: "Users",
     children: <Users />,
-  },
-  {
-    id: "2",
-    children: <Stadium/>,
-  },
-  {
-    id: "3",
-    children: <Games/>,
-  },
-  {
-    id: "4",
-    children: <Tickets/>,
-  },
-  {
-    id: "5",
-    children: <MemberRequests/>,
   },
 ];
 
 const AdminPage = () => {
   const [activePage, setActivePage] = useState("1");
+  const activeItem = items.find(item => item.id === activePage);
 
   return (
-    <Container className={styles.container}>
-      <h1>Admin</h1>
-      <Row className={styles.row}>
-        <Nav tabs>
-            {navItems.map((item) => {
-              return (
-                <NavItem key={item.id}>
-                  <NavLink
-                    active={item.id === activePage}
-                    onClick={() => setActivePage(item.id)}
-                  >
-                    {item.title}
-                  </NavLink>
-                </NavItem>
-              );
-            })}
-        </Nav>
-        <TabContent activeTab={activePage}>
-          {items.map((item) => {
+    <div className={styles.dashboard}>
+      {/* Sidebar */}
+      <aside className={styles.sidebar}>
+        <div className={styles.sidebarHeader}>
+          <div className={styles.logoIcon}>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h2 className={styles.logoTitle}>PTPro</h2>
+        </div>
+        
+        <nav className={styles.navMenu}>
+          {navItems.map((item) => {
             return (
-              <TabPane key={item.id} tabId={item.id}>
-                { item.children }
-              </TabPane>
+              <div
+                key={item.id}
+                className={`${styles.navItem} ${item.id === activePage ? styles.active : ""}`}
+                onClick={() => setActivePage(item.id)}
+              >
+                {item.icon}
+                <span>{item.title}</span>
+              </div>
             );
           })}
-        </TabContent>
-      </Row>
-    </Container>
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className={styles.mainContent}>
+        <div className={styles.header}>
+          <h1 className={styles.headerTitle}>{activeItem?.title || "Dashboard"}</h1>
+        </div>
+        
+        <div className={styles.contentArea}>
+          {activeItem?.children}
+        </div>
+      </main>
+    </div>
   );
 };
 
