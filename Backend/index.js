@@ -163,7 +163,7 @@ if (swaggerUi && swaggerSpec) {
   try {
     const swaggerUiOptions = {
       customCss: '.swagger-ui .topbar { display: none }',
-      customSiteTitle: 'Estadio API Documentation',
+      customSiteTitle: 'PTPro API Documentation',
       swaggerOptions: {
         persistAuthorization: true, // Manter autorização após refresh
         displayRequestDuration: true, // Mostrar duração das requisições
@@ -239,6 +239,11 @@ app.use((req, res, next) => {
     return res.end();
   }
   // Para outras rotas não encontradas
+  console.log('❌ Route not found handler triggered');
+  console.log('❌ Method:', req.method);
+  console.log('❌ Path:', req.path);
+  console.log('❌ URL:', req.url);
+  console.log('❌ Original URL:', req.originalUrl);
   res.status(404).json({ error: 'Route not found' });
 });
 

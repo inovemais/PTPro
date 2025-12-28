@@ -12,7 +12,7 @@ interface LoginFormProps {
 }
 
 interface LoginFormData {
-  name: string;
+  email: string;
   password: string;
 }
 
@@ -271,17 +271,17 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
               {loginMode === "form" && (
                 <form className={styles.formLogin} onSubmit={handleSubmit(onSubmit)}>
                   <div className={styles.field}>
-                    <label className={styles.label} htmlFor="name">
+                    <label className={styles.label} htmlFor="email">
                       Email
                     </label>
                     <input
-                      id="name"
+                      id="email"
                       type="email"
-                      autoComplete="username"
+                      autoComplete="email"
                       required
                       placeholder="Insira o seu email"
                       className={styles.input}
-                      {...register("name")}
+                      {...register("email")}
                       disabled={loading}
                     />
                   </div>

@@ -99,7 +99,6 @@ A aplicação estará disponível em `http://localhost:5173` (porta padrão do V
 - **Gestão de Treinadores**: CRUD de treinadores
 - **Gestão de Clientes**: Gestão de clientes e seus dados
 - **Gestão de Planos de Treino**: Criação e gestão de planos de treino (workouts)
-- **Pedidos de Membros**: Sistema de pedidos de adesão de membros
 - **Pedidos de Mudança de Treinador**: Gestão de pedidos de mudança de treinador
 - **Mensagens**: Sistema de mensagens em tempo real
 - **Sistema de Autenticação**: Login/registro com JWT e autenticação por QR Code
@@ -117,6 +116,5 @@ A aplicação estará disponível em `http://localhost:5173` (porta padrão do V
 - `/trainers` - Gestão de treinadores
 - `/clients` - Gestão de clientes
 - `/workouts` - Gestão de planos de treino
-- `/member-requests` - Pedidos de membros
 - `/trainer-change-requests` - Pedidos de mudança de treinador
 - `/messages` - Mensagens em tempo real

@@ -127,11 +127,12 @@ const options = {
         },
         LoginRequest: {
           type: 'object',
-          required: ['name', 'password'],
+          required: ['email', 'password'],
           properties: {
-            name: {
+            email: {
               type: 'string',
-              description: 'Username'
+              format: 'email',
+              description: 'User email'
             },
             password: {
               type: 'string',
@@ -283,10 +284,6 @@ const options = {
       {
         name: 'Users',
         description: 'User management endpoints'
-      },
-      {
-        name: 'Member Requests',
-        description: 'Member request management endpoints'
       }
     ]
   },
