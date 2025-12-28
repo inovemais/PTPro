@@ -10,7 +10,7 @@
 ### 2. SECRET
 **Descrição:** Chave secreta para assinar tokens JWT  
 **Valor:** Gere uma string aleatória forte (ex: use `openssl rand -base64 32`)  
-**Exemplo:** `sua-chave-secreta-super-forte-aqui-123456789`
+**Exemplo:** `sua-chave-secreta-gerada-aqui-123456789` (não use este exemplo, gere sua própria chave!)
 
 ### 3. RENDER
 **Descrição:** Indica que está rodando no Render (já configurado no render.yaml)  
