@@ -1,11 +1,12 @@
 services:
   - type: web
-    name: estadio-backend
+    name: ptpro-backend
     env: node
     region: oregon
     plan: free
-    buildCommand: cd Backend && npm install
-    startCommand: cd Backend && npm start
+    rootDir: Backend
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
