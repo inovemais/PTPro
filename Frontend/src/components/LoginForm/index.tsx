@@ -42,6 +42,7 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
     setLoading(true);
     const apiUrl = buildApiUrl("/api/auth/login");
     console.log("🔗 Attempting login to:", apiUrl);
+    console.log("📤 Sending login data:", JSON.stringify(data, null, 2));
     
     try {
       const res = await fetch(apiUrl, {

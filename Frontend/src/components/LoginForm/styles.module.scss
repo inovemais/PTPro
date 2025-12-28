@@ -105,7 +105,7 @@
         transition: color $transition-base;
         
         &:hover {
-            color: darken($primary-color, 10%);
+            color: adjust-color($primary-color, $lightness: -10%);
             text-decoration: underline;
         }
     }
