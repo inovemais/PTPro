@@ -64,7 +64,7 @@ const options = {
                   type: 'array',
                   items: {
                     type: 'string',
-                    enum: ['admin', 'member', 'notMember', 'anonimous']
+                    enum: ['admin', 'PersonalTrainer', 'client']
                   }
                 }
               }
@@ -84,31 +84,6 @@ const options = {
             taxNumber: {
               type: 'number',
               description: 'Tax identification number (unique)'
-            },
-            memberId: {
-              type: 'string',
-              description: 'Reference to Member document'
-            }
-          }
-        },
-        Member: {
-          type: 'object',
-          properties: {
-            _id: {
-              type: 'string',
-              description: 'Member ID'
-            },
-            taxNumber: {
-              type: 'string',
-              description: 'Tax identification number'
-            },
-            photo: {
-              type: 'string',
-              description: 'Photo URL or path'
-            },
-            userId: {
-              type: 'string',
-              description: 'Reference to User document'
             }
           }
         },
@@ -208,9 +183,9 @@ const options = {
                   type: 'array',
                   items: {
                     type: 'string',
-                    enum: ['admin', 'member', 'notMember', 'anonimous']
+                    enum: ['admin', 'PersonalTrainer', 'client']
                   },
-                  description: 'Must include "admin" to create an admin user',
+                  description: 'Must include "admin" to create an admin user, or "client"/"PersonalTrainer" for other users',
                   example: ['admin']
                 }
               }
@@ -273,6 +248,401 @@ const options = {
               }
             }
           }
+        },
+        StandardResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true
+            },
+            data: {
+              type: 'object',
+              description: 'Response data'
+            },
+            meta: {
+              type: 'object',
+              description: 'Metadata (pagination, etc.)'
+            }
+          }
+        },
+        ErrorResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: false
+            },
+            data: {
+              type: 'null'
+            },
+            meta: {
+              type: 'object',
+              properties: {
+                error: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        },
+        ValidationErrorResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: false
+            },
+            data: {
+              type: 'null'
+            },
+            meta: {
+              type: 'object',
+              properties: {
+                error: {
+                  type: 'string'
+                },
+                errors: {
+                  type: 'object'
+                }
+              }
+            }
+          }
+        },
+        Trainer: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string'
+            },
+            userId: {
+              type: 'object',
+              $ref: '#/components/schemas/User'
+            },
+            bio: {
+              type: 'string'
+            },
+            specialties: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
+            },
+            isValidated: {
+              type: 'boolean',
+              default: false
+            },
+            photo: {
+              type: 'string'
+            }
+          }
+        },
+        TrainerCreate: {
+          type: 'object',
+          required: ['userId'],
+          properties: {
+            userId: {
+              type: 'string',
+              description: 'User ID'
+            },
+            bio: {
+              type: 'string'
+            },
+            specialties: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
+            },
+            photo: {
+              type: 'string'
+            }
+          }
+        },
+        TrainerUpdate: {
+          type: 'object',
+          properties: {
+            bio: {
+              type: 'string'
+            },
+            specialties: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
+            },
+            isValidated: {
+              type: 'boolean'
+            },
+            photo: {
+              type: 'string'
+            }
+          }
+        },
+        Client: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string'
+            },
+            userId: {
+              type: 'object',
+              $ref: '#/components/schemas/User'
+            },
+            trainerId: {
+              type: 'string',
+              description: 'Associated trainer ID'
+            },
+            heightCm: {
+              type: 'number'
+            },
+            weightKg: {
+              type: 'number'
+            },
+            goal: {
+              type: 'string'
+            },
+            notes: {
+              type: 'string'
+            }
+          }
+        },
+        ClientCreate: {
+          type: 'object',
+          required: ['userId'],
+          properties: {
+            userId: {
+              type: 'string'
+            },
+            trainerId: {
+              type: 'string'
+            },
+            heightCm: {
+              type: 'number'
+            },
+            weightKg: {
+              type: 'number'
+            },
+            goal: {
+              type: 'string'
+            },
+            notes: {
+              type: 'string'
+            }
+          }
+        },
+        ClientUpdate: {
+          type: 'object',
+          properties: {
+            trainerId: {
+              type: 'string'
+            },
+            heightCm: {
+              type: 'number'
+            },
+            weightKg: {
+              type: 'number'
+            },
+            goal: {
+              type: 'string'
+            },
+            notes: {
+              type: 'string'
+            }
+          }
+        },
+        ChangeRequestCreate: {
+          type: 'object',
+          required: ['requestedTrainerId'],
+          properties: {
+            requestedTrainerId: {
+              type: 'string',
+              description: 'ID of the trainer to switch to'
+            },
+            reason: {
+              type: 'string',
+              description: 'Reason for the change request'
+            }
+          }
+        },
+        PlanCreate: {
+          type: 'object',
+          required: ['trainerId', 'clientId', 'name', 'frequencyPerWeek', 'startDate'],
+          properties: {
+            trainerId: {
+              type: 'string'
+            },
+            clientId: {
+              type: 'string'
+            },
+            name: {
+              type: 'string'
+            },
+            description: {
+              type: 'string'
+            },
+            frequencyPerWeek: {
+              type: 'integer',
+              enum: [3, 4, 5]
+            },
+            startDate: {
+              type: 'string',
+              format: 'date'
+            },
+            endDate: {
+              type: 'string',
+              format: 'date'
+            },
+            sessions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  weekday: {
+                    type: 'string',
+                    enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+                  },
+                  exercises: {
+                    type: 'array',
+                    maxItems: 10,
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: {
+                          type: 'string'
+                        },
+                        sets: {
+                          type: 'number'
+                        },
+                        reps: {
+                          type: 'number'
+                        },
+                        instructions: {
+                          type: 'string'
+                        },
+                        videoUrl: {
+                          type: 'string'
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        PlanUpdate: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string'
+            },
+            description: {
+              type: 'string'
+            },
+            frequencyPerWeek: {
+              type: 'integer',
+              enum: [3, 4, 5]
+            },
+            startDate: {
+              type: 'string',
+              format: 'date'
+            },
+            endDate: {
+              type: 'string',
+              format: 'date'
+            },
+            isActive: {
+              type: 'boolean'
+            },
+            sessions: {
+              type: 'array',
+              items: {
+                type: 'object'
+              }
+            }
+          }
+        },
+        ComplianceCreate: {
+          type: 'object',
+          required: ['workoutPlanId', 'date', 'status'],
+          properties: {
+            workoutPlanId: {
+              type: 'string'
+            },
+            date: {
+              type: 'string',
+              format: 'date'
+            },
+            status: {
+              type: 'string',
+              enum: ['completed', 'missed', 'partial']
+            },
+            reason: {
+              type: 'string',
+              description: 'Required if status is "missed"'
+            },
+            photo: {
+              type: 'string',
+              format: 'binary',
+              description: 'Optional photo upload'
+            }
+          }
+        },
+        ComplianceUpdate: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['completed', 'missed', 'partial']
+            },
+            reason: {
+              type: 'string'
+            },
+            photo: {
+              type: 'string',
+              format: 'binary'
+            }
+          }
+        },
+        MessageCreate: {
+          type: 'object',
+          required: ['receiverId', 'text'],
+          properties: {
+            receiverId: {
+              type: 'string',
+              description: 'ID of the message receiver'
+            },
+            text: {
+              type: 'string',
+              description: 'Message text'
+            }
+          }
+        },
+        Message: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string'
+            },
+            senderId: {
+              type: 'string'
+            },
+            receiverId: {
+              type: 'string'
+            },
+            text: {
+              type: 'string'
+            },
+            read: {
+              type: 'boolean',
+              default: false
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time'
+            }
+          }
         }
       }
     },
@@ -284,11 +654,72 @@ const options = {
       {
         name: 'Users',
         description: 'User management endpoints'
+      },
+      {
+        name: 'Trainers',
+        description: 'Trainer profile management'
+      },
+      {
+        name: 'Clients',
+        description: 'Client profile management'
+      },
+      {
+        name: 'Change Requests',
+        description: 'Trainer change requests'
+      },
+      {
+        name: 'Plans',
+        description: 'Training plans management'
+      },
+      {
+        name: 'Compliance',
+        description: 'Workout compliance tracking'
+      },
+      {
+        name: 'Chat',
+        description: 'Messaging between users'
+      },
+      {
+        name: 'Uploads',
+        description: 'File uploads'
       }
-    ]
+    ],
+    responses: {
+      UnauthorizedError: {
+        description: 'Unauthorized - Invalid or missing token',
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/ErrorResponse'
+            }
+          }
+        }
+      },
+      NotFoundError: {
+        description: 'Resource not found',
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/ErrorResponse'
+            }
+          }
+        }
+      },
+      ValidationError: {
+        description: 'Validation error',
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/ValidationErrorResponse'
+            }
+          }
+        }
+      }
+    }
   },
   apis: [
-    './server/*.js', // Caminho para os arquivos com anotações Swagger
+    './server/*.js',
+    './server/src/modules/**/*.js',
     './index.js'
   ],
 };

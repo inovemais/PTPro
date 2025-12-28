@@ -6,7 +6,8 @@ module.exports = (req, res, next) => {
         '/register',
         '/register/admin',
         '/login',
-        '/qr-code/login'
+        '/qr-code/login',
+        '/debug/users'
     ];
     
     // Verificar se a rota atual é pública
@@ -64,7 +65,8 @@ module.exports = (req, res, next) => {
         next();
       })
       .catch((err) => {
-        console.error('❌ Token verification failed:', err.message || err);
+        const errorMessage = err && typeof err === 'object' && err.message ? err.message : (err || 'Unknown error');
+        console.error('❌ Token verification failed:', errorMessage);
         res.status(401).send({ auth: false, message: 'Not authorized' })
       })
 };

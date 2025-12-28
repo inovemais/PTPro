@@ -5,6 +5,7 @@ import { Navigate, Link } from "react-router-dom";
 import { useState } from "react";
 import QRCodeLogin from "../QRCodeLogin";
 import { buildApiUrl } from "../../config/api";
+import { useAuth } from "../../context/AuthContext";
 
 interface LoginFormProps {
   title: string;
@@ -24,13 +25,16 @@ interface LoginResponse {
 }
 
 interface QRCodeLoginResponse {
-  success: boolean;
+  success?: boolean;
+  auth?: boolean;
   token?: string;
   error?: string;
+  message?: string;
 }
 
 const LoginForm = ({ title, role }: LoginFormProps) => {
   const { register, handleSubmit } = useForm<LoginFormData>();
+  const { login: authLogin, refreshAuth } = useAuth();
   const [isLogged, setLogged] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [loginMode, setLoginMode] = useState<"form" | "qr-scan">("form");
@@ -83,27 +87,16 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
       
       if (body?.token) {
         try {
-          localStorage.setItem("token", body.token);
-          console.log("✅ Token saved to localStorage");
+          // Usar o AuthContext para fazer login corretamente
+          authLogin(body.token);
+          console.log("✅ Token saved via AuthContext");
           console.log("✅ Token value (first 20 chars):", body.token.substring(0, 20) + "...");
           console.log("✅ Token length:", body.token.length);
-          
-          // Verificar se foi realmente salvo
-          const savedToken = localStorage.getItem("token");
-          if (savedToken === body.token) {
-            console.log("✅ Token verification: Successfully saved and verified");
-          } else {
-            console.error("❌ Token verification: Failed to save token correctly");
-            console.error("❌ Expected:", body.token.substring(0, 20) + "...");
-            console.error("❌ Got:", savedToken ? savedToken.substring(0, 20) + "..." : "null");
-          }
         } catch (error) {
-          console.error("❌ Error saving token to localStorage:", error);
+          console.error("❌ Error saving token via AuthContext:", error);
         }
       } else {
-        console.error("❌ CRITICAL: No token in response body!");
-        console.error("❌ Response body:", JSON.stringify(body, null, 2));
-        
+        console.warn("⚠️ No token in response body, but auth may be set via cookie");
       }
       
       // Verificar se auth é true (mesmo que não tenha token explícito, o cookie pode estar setado)
@@ -154,6 +147,7 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
 
   const handleQRScanSuccess = async (qrDataString: string) => {
     // Quando QR code é escaneado, fazer login com ele
+    setLoading(true);
     try {
       const res = await fetch(buildApiUrl("/api/auth/qr-code/login"), {
         headers: { "Content-Type": "application/json" },
@@ -164,19 +158,46 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
         }),
       });
 
-      const result: QRCodeLoginResponse = await res.json();
+      let result: QRCodeLoginResponse;
+      try {
+        result = await res.json();
+      } catch (parseError) {
+        console.error("❌ Failed to parse JSON response:", parseError);
+        alert("Erro ao processar resposta do servidor");
+        setLoading(false);
+        return;
+      }
 
-      if (res.ok && result.success) {
+      if (res.ok && (result.success || result.auth)) {
         if (result.token) {
-          localStorage.setItem("token", result.token);
+          // Usar o AuthContext para fazer login corretamente
+          authLogin(result.token);
+          console.log("✅ QR Code login successful, token saved via AuthContext");
+        } else {
+          console.warn("⚠️ No token in QR code login response, but success/auth is true");
+          // Mesmo sem token, tentar atualizar o contexto (pode ter cookie httpOnly)
+          const token = localStorage.getItem("token");
+          if (token) {
+            authLogin(token);
+          } else {
+            // Se não houver token no localStorage, pode estar em cookie httpOnly
+            // Atualizar o contexto de autenticação
+            await refreshAuth();
+            console.log("✅ Auth context refreshed after QR code login");
+          }
         }
         setLogged(true);
       } else {
-        alert(result.error || "Login failed");
+        const errorMsg = result.error || result.message || "Login failed";
+        console.error("❌ QR Code login failed:", errorMsg);
+        alert(errorMsg);
       }
-    } catch (err) {
-      console.error("Error validating QR code:", err);
-      alert("Error validating QR code");
+    } catch (err: any) {
+      console.error("❌ Error validating QR code:", err);
+      const errorMessage = err?.message || "Erro ao validar QR code";
+      alert(`Erro: ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -208,11 +229,7 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
   };
 
   if (isLogged && !qrCode) {
-    return role === "admin" ? (
-      <Navigate to="/admin" replace={true} />
-    ) : (
-      <Navigate to="/user" replace={true} />
-    );
+    return <Navigate to="/dashboard" replace={true} />;
   }
 
   return (

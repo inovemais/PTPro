@@ -1,6 +1,5 @@
 let mongoose = require("mongoose");
 let scopes = require("./scopes");
-let Member = require("../member/member");
 
 let Schema = mongoose.Schema;
 
@@ -11,10 +10,6 @@ let RoleSchema = new Schema({
       type: String,
       enum: [
         scopes.Admin,
-        scopes.Member,
-        scopes.NonMember,
-        scopes.Anonimous,
-        // novos perfis para o domínio de Personal Trainers
         scopes.PersonalTrainer,
         scopes.Client,
       ],
@@ -36,51 +31,6 @@ let UserSchema = new Schema({
   address: { type: String },
   country: { type: String },
   taxNumber: { type: Number, unique: true, sparse: true },
-  memberId: { type: mongoose.Schema.Types.ObjectId, required: false, ref: "Member" },
-});
-
-// Middleware para criar automaticamente um membro quando um utilizador é criado
-UserSchema.pre('save', async function(next) {
-  // Se já tem memberId, não criar novo membro
-  if (this.memberId) {
-    return next();
-  }
-
-  // Se não tem taxNumber, não criar membro automaticamente
-  if (!this.taxNumber) {
-    return next();
-  }
-
-  try {
-    // Verificar se já existe um membro com este taxNumber
-    const existingMember = await Member.findOne({ taxNumber: this.taxNumber });
-    
-    if (existingMember) {
-      // Se já existe, associar o utilizador ao membro existente
-      this.memberId = existingMember._id;
-      return next();
-    }
-
-    // Criar um novo membro com o taxNumber do utilizador
-    const member = new Member({
-      dataCreated: new Date().toISOString(),
-      paymentRegular: false,
-      cash: 0,
-      taxNumber: this.taxNumber, // Usar o taxNumber do utilizador
-      photo: `member_${this.taxNumber}.jpg` // Nome baseado no taxNumber
-    });
-    
-    // Salvar o membro
-    const savedMember = await member.save();
-    
-    // Associar o memberId ao utilizador
-    this.memberId = savedMember._id;
-    
-    next();
-  } catch (error) {
-    console.log('Error in middleware:', error);
-    next(error);
-  }
 });
 
 // the schema is useless so far

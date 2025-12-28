@@ -3,13 +3,36 @@ const path = require('path');
 const fs = require('fs-extra');
 
 // Criar diretório de uploads se não existir
-const uploadDir = path.join(__dirname, 'uploads');
+const uploadDir = path.join(__dirname, '../uploads');
 fs.ensureDirSync(uploadDir);
+
+// Criar subdiretórios
+const uploadDirs = {
+  workouts: path.join(uploadDir, 'workouts'),
+  profiles: path.join(uploadDir, 'profiles'),
+  documents: path.join(uploadDir, 'documents'),
+};
+
+Object.values(uploadDirs).forEach(dir => {
+  fs.ensureDirSync(dir);
+});
 
 // Configuração do storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadDir);
+    // Determine subdirectory based on upload type or field name
+    const uploadType = req.body?.type || (file.fieldname === 'photo' ? 'workout' : 'general');
+    let destDir = uploadDir;
+    
+    if (uploadType === "workout" || file.fieldname === 'photo') {
+      destDir = uploadDirs.workouts;
+    } else if (uploadType === "profile") {
+      destDir = uploadDirs.profiles;
+    } else if (uploadType === "document") {
+      destDir = uploadDirs.documents;
+    }
+    
+    cb(null, destDir);
   },
   filename: function (req, file, cb) {
     // Gerar nome único para o ficheiro

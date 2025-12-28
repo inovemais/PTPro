@@ -5,6 +5,7 @@ import styles from "./styles.module.scss";
 
 const QRCodeLogin = ({ onScanSuccess }) => {
   const html5QrCodeRef = useRef(null);
+  const qrReaderRef = useRef(null);
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState(null);
 
@@ -28,7 +29,21 @@ const QRCodeLogin = ({ onScanSuccess }) => {
     try {
       setError(null);
       
-      const html5QrCode = new Html5Qrcode("qr-reader");
+      if (!qrReaderRef.current) {
+        setError("QR reader element not found");
+        return;
+      }
+
+      // Clear any previous scanner instance
+      if (html5QrCodeRef.current) {
+        try {
+          await html5QrCodeRef.current.stop();
+        } catch (e) {
+          // Ignore errors when stopping
+        }
+      }
+      
+      const html5QrCode = new Html5Qrcode(qrReaderRef.current.id);
       html5QrCodeRef.current = html5QrCode;
 
       await html5QrCode.start(
@@ -62,6 +77,7 @@ const QRCodeLogin = ({ onScanSuccess }) => {
         setIsScanning(false);
       } catch (err) {
         console.error("Error stopping scanner:", err);
+        setIsScanning(false);
       }
     }
   };
@@ -98,7 +114,7 @@ const QRCodeLogin = ({ onScanSuccess }) => {
           </Alert>
         )}
 
-        <div id="qr-reader" className={styles.qrReader}></div>
+        <div id="qr-reader" ref={qrReaderRef} className={styles.qrReader}></div>
 
         {!isScanning && (
           <Button color="primary" onClick={startScanning} className={styles.scanButton}>

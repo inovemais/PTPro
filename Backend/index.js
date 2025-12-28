@@ -47,6 +47,11 @@ try {
 
 const app = express();
 
+// Body parser no nível principal (antes de qualquer rota)
+const bodyParser = require('body-parser');
+app.use(bodyParser.json({ limit: "100mb" }));
+app.use(bodyParser.urlencoded({ limit: "100mb", extended: true }));
+
 // Handler CRÍTICO para OPTIONS (preflight) - DEVE SER O ABSOLUTAMENTE PRIMEIRO
 // Este handler deve responder a TODAS as requisições OPTIONS antes de qualquer outro middleware
 app.use((req, res, next) => {
@@ -226,6 +231,11 @@ try {
 
 // Handler para rotas não encontradas (antes do middleware de erros)
 app.use((req, res, next) => {
+  // Se os headers já foram enviados, não fazer nada
+  if (res.headersSent) {
+    return;
+  }
+  
   // Se for OPTIONS, já foi tratado antes, mas garantir resposta
   if (req.method === 'OPTIONS') {
     const origin = req.headers.origin || '*';
@@ -296,8 +306,22 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Eventos de conexão Socket.IO (sem logs verbosos)
-io.on('connection', () => {});
+// Eventos de conexão Socket.IO
+io.on('connection', (socket) => {
+  console.log('Socket.IO client connected:', socket.id);
+
+  // Permitir que clientes se juntem a rooms baseados no userId
+  socket.on('join', (userId) => {
+    if (userId) {
+      socket.join(String(userId));
+      console.log(`Socket ${socket.id} joined room for user ${userId}`);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket.IO client disconnected:', socket.id);
+  });
+});
 
 // Iniciar servidor HTTP e WebSocket
 // IMPORTANTE: Sempre escutar na porta, mesmo se houver erros anteriores

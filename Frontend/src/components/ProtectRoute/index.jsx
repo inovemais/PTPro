@@ -1,8 +1,8 @@
 import { Navigate } from "react-router-dom";
-import { useAuthContext } from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuthContext();
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return <div>Loading</div>;

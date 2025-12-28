@@ -379,7 +379,19 @@ function AuthRouter() {
    */
   // Endpoint público para login
   router.route("/login").post(function (req, res, next) {
+    console.log('\n\n\n\n\n');
+    console.log('========================================');
+    console.log('🚀🚀🚀 LOGIN ENDPOINT CALLED 🚀🚀🚀');
+    console.log('========================================');
+    console.log('🚀 Request method:', req.method);
+    console.log('🚀 Request path:', req.path);
+    console.log('🚀 Request body type:', typeof req.body);
+    console.log('🚀 Request body:', req.body);
     let body = req.body;
+    console.log('🔍 Has name?', !!body?.name, 'Name value:', body?.name);
+    console.log('🔍 Has password?', !!body?.password, 'Password length:', body?.password?.length);
+    if (body.name && !body.email) { body.email = body.name; }
+    console.log('🔍 Calling findUser with:', { email: body.email, hasPassword: !!body.password, passwordLength: body.password?.length });
 
     return Users.findUser(body)
       .then((user) => {
@@ -608,16 +620,17 @@ function AuthRouter() {
               }
             }
           });
-          next();
         })
         .catch((err) => {
           console.error('Error fetching user:', err);
-          res.status(500).send({ error: err.message || 'Error fetching user' });
-          next();
+          if (!res.headersSent) {
+            res.status(500).send({ error: err.message || 'Error fetching user' });
+          }
         });
     } catch (err) {
-      res.status(500).send({ error: err.message });
-      next();
+      if (!res.headersSent) {
+        res.status(500).send({ error: err.message });
+      }
     }
   });
 

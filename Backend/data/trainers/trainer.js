@@ -10,6 +10,7 @@ let TrainerSchema = new Schema(
     phone: { type: String },
     photo: { type: String }, // caminho para upload de imagem
     isValidated: { type: Boolean, default: false }, // validado por admin
+    isActive: { type: Boolean, default: true }, // ativo/inativo
   },
   { timestamps: true }
 );
