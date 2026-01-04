@@ -106,14 +106,14 @@ function AuthRouter() {
     const body = req.body;
     
     const { role } = body;
+    const scopes = require("../data/users/scopes");
 
     // Accept either a string or array for scope; must contain 'admin'
     const roleScopes = Array.isArray(role && role.scope) ? role.scope : [role && role.scope];
-    if(!scopes.includes('admin')) {
+    if(!roleScopes.includes(scopes.Admin)) {
       return res.status(401).send({ auth: false, message: 'Only create Admin via this endpoint' })
     }
 
-    // Se não foi fornecido um nome, gerar a partir do email
     if (!body.name && body.email) {
       body.name = body.email.split('@')[0];
     }
