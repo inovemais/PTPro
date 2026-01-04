@@ -32,9 +32,33 @@ const hostname = ("RENDER" in process.env) ? "0.0.0.0" : config.hostname; // 0.0
 // Conectar ao MongoDB (não bloquear o servidor se falhar)
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || config.db;
 
-mongoose.connect(mongoUri).catch((err) => {
-  console.error('MongoDB connection error:', err.message);
-  // Não bloquear o servidor, mas avisar
+console.log('🔗 Connecting to MongoDB...');
+console.log('📍 MongoDB URI:', mongoUri ? (mongoUri.includes('@') ? mongoUri.split('@')[0].replace(/mongodb\+srv:\/\/([^:]+):([^@]+)/, 'mongodb+srv://***:***') : mongoUri) : 'Not configured');
+
+mongoose.connect(mongoUri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+  .then(() => {
+    console.log('✅ MongoDB connected successfully');
+    console.log('📊 Database:', mongoose.connection.db.databaseName);
+  })
+  .catch((err) => {
+    console.error('❌ MongoDB connection error:', err.message);
+    console.error('⚠️  Server will start but database operations may fail');
+  });
+
+// Log connection events
+mongoose.connection.on('connected', () => {
+  console.log('✅ Mongoose connected to MongoDB');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ Mongoose connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.warn('⚠️  Mongoose disconnected from MongoDB');
 });
 
 let router;
