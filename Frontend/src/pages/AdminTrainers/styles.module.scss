@@ -14,7 +14,7 @@
 
 .header {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   gap: $spacing-lg;
   margin-bottom: $spacing-2xl;
@@ -37,6 +37,35 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.tabs {
+  margin-bottom: $spacing-xl;
+  border-bottom: 2px solid rgba(99, 102, 241, 0.1);
+  
+  :global(.nav-link) {
+    color: $text-secondary;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: $spacing-md $spacing-xl;
+    font-weight: $font-weight-medium;
+    transition: all $transition-base;
+    
+    &:hover {
+      color: $primary-color;
+      border-bottom-color: rgba(99, 102, 241, 0.3);
+    }
+  }
+}
+
+.activeTab {
+  color: $primary-color !important;
+  border-bottom-color: $primary-color !important;
+  font-weight: $font-weight-semibold !important;
+}
+
+.tabContent {
+  padding-top: $spacing-lg;
 }
 
 .addButton {

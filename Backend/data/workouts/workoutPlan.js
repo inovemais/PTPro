@@ -7,6 +7,7 @@ let ExerciseSchema = new Schema(
     name: { type: String, required: true },
     sets: { type: Number, required: true },
     reps: { type: Number, required: true },
+    restSeconds: { type: Number }, // Tempo de descanso em segundos
     instructions: { type: String },
     videoUrl: { type: String },
   },
@@ -16,6 +17,7 @@ let ExerciseSchema = new Schema(
 // Sessão de treino (até 10 exercícios) associada a um dia da semana
 let WorkoutSessionSchema = new Schema(
   {
+    week: { type: Number, default: 1 }, // Número da semana (Semana 1, 2, 3, etc.)
     weekday: {
       type: String,
       enum: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
@@ -46,6 +48,7 @@ let WorkoutPlanSchema = new Schema(
     startDate: { type: Date, required: true },
     endDate: { type: Date },
     isActive: { type: Boolean, default: true },
+    workoutDates: [{ type: Date }], // Datas específicas dos treinos da semana
     sessions: [WorkoutSessionSchema],
   },
   { timestamps: true }

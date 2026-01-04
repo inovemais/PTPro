@@ -46,9 +46,9 @@ async function create(req, res) {
       status: "pending",
     });
 
-    sendSuccess(res, request, {}, 201);
+    return sendSuccess(res, request, {}, 201);
   } catch (error) {
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 
@@ -60,11 +60,11 @@ async function list(req, res) {
       { limit: parseInt(limit), skip: parseInt(skip) }
     );
 
-    sendSuccess(res, result.requests, {
+    return sendSuccess(res, result.requests, {
       pagination: result.pagination,
     });
   } catch (error) {
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 
@@ -90,9 +90,9 @@ async function approve(req, res) {
       trainerId: request.requestedTrainerId?._id || request.requestedTrainerId,
     });
 
-    sendSuccess(res, updated);
+    return sendSuccess(res, updated);
   } catch (error) {
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 
@@ -110,9 +110,9 @@ async function reject(req, res) {
     }
 
     const updated = await service.updateStatus(id, "rejected");
-    sendSuccess(res, updated);
+    return sendSuccess(res, updated);
   } catch (error) {
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 

@@ -7,10 +7,10 @@ const { uploadSingle } = require("../../../../middleware/upload");
 
 /**
  * @swagger
- * /api/compliance:
+ * /api/workout-logs:
  *   get:
- *     summary: List compliance logs
- *     tags: [Compliance]
+ *     summary: List workout logs
+ *     tags: [WorkoutLogs]
  *     security:
  *       - cookieAuth: []
  *     parameters:
@@ -34,7 +34,7 @@ const { uploadSingle } = require("../../../../middleware/upload");
  *           format: date
  *     responses:
  *       200:
- *         description: List of compliance logs
+ *         description: List of workout logs
  */
 router.get(
   "/",
@@ -44,10 +44,10 @@ router.get(
 
 /**
  * @swagger
- * /api/compliance:
+ * /api/workout-logs:
  *   post:
- *     summary: Create compliance log (mark workout as completed/missed)
- *     tags: [Compliance]
+ *     summary: Create workout log (mark workout as completed/missed)
+ *     tags: [WorkoutLogs]
  *     security:
  *       - cookieAuth: []
  *     requestBody:
@@ -55,10 +55,10 @@ router.get(
  *       content:
  *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/ComplianceCreate'
+ *             $ref: '#/components/schemas/WorkoutLogCreate'
  *     responses:
  *       201:
- *         description: Compliance log created successfully
+ *         description: Workout log created successfully
  */
 router.post(
   "/",
@@ -69,10 +69,10 @@ router.post(
 
 /**
  * @swagger
- * /api/compliance/{id}:
+ * /api/workout-logs/{id}:
  *   put:
- *     summary: Update compliance log
- *     tags: [Compliance]
+ *     summary: Update workout log
+ *     tags: [WorkoutLogs]
  *     security:
  *       - cookieAuth: []
  *     parameters:
@@ -86,10 +86,10 @@ router.post(
  *       content:
  *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/ComplianceUpdate'
+ *             $ref: '#/components/schemas/WorkoutLogUpdate'
  *     responses:
  *       200:
- *         description: Compliance log updated successfully
+ *         description: Workout log updated successfully
  */
 router.put(
   "/:id",
@@ -100,10 +100,10 @@ router.put(
 
 /**
  * @swagger
- * /api/compliance/stats:
+ * /api/workout-logs/stats:
  *   get:
- *     summary: Get compliance statistics
- *     tags: [Compliance]
+ *     summary: Get workout log statistics
+ *     tags: [WorkoutLogs]
  *     security:
  *       - cookieAuth: []
  *     parameters:
@@ -119,7 +119,7 @@ router.put(
  *           default: week
  *     responses:
  *       200:
- *         description: Compliance statistics
+ *         description: Workout log statistics
  */
 router.get(
   "/stats",

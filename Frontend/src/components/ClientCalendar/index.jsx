@@ -41,32 +41,43 @@ const ClientCalendar = () => {
         headers: authHeaders(),
         credentials: "include",
       });
-      const clientData = await clientRes.json();
+      const clientResData = await clientRes.json();
+      // Handle standardized response format: {success: true, data: {...}}
+      const clientData = clientResData.success && clientResData.data ? clientResData.data : clientResData;
       setClient(clientData);
 
       if (clientData && clientData._id) {
         const plansRes = await fetch(
-          buildApiUrl(`/api/workouts/plans?clientId=${clientData._id}&isActive=true&limit=20&skip=0`),
+          buildApiUrl(`/api/plans?clientId=${clientData._id}&isActive=true&limit=20&skip=0`),
           {
             headers: authHeaders(),
             credentials: "include",
           }
         );
         const plansData = await plansRes.json();
-        setPlans(plansData.plans || []);
+        // Handle standardized response format: {success: true, data: [...], meta: {...}}
+        const plansList = plansData.success && plansData.data ? plansData.data : (plansData.plans || []);
+        setPlans(plansList);
 
         const logsRes = await fetch(
-          buildApiUrl(`/api/workouts/logs?clientId=${clientData._id}&limit=200&skip=0`),
+          buildApiUrl(`/api/workout-logs?clientId=${clientData._id}&limit=200&skip=0`),
           {
             headers: authHeaders(),
             credentials: "include",
           }
         );
         const logsData = await logsRes.json();
-        setLogs(logsData.logs || []);
+        // Handle standardized response format: {success: true, data: [...], meta: {...}}
+        const logsList = logsData.success && logsData.data ? logsData.data : (logsData.logs || []);
+        setLogs(logsList);
       }
     } catch (err) {
       console.error("Error loading client calendar data:", err);
+      // Silently handle 403 errors (user doesn't have Client scope)
+      if (err.response?.status === 403) {
+        console.log("User doesn't have Client scope, skipping client data fetch");
+        return;
+      }
     }
   };
 
@@ -103,21 +114,27 @@ const ClientCalendar = () => {
     // Por simplicidade, usar o primeiro plano ativo
     const plan = plans[0];
 
-    const body = {
-      workoutPlanId: plan._id,
-      clientId: client._id,
-      trainerId: plan.trainerId,
-      date: selectedDate,
-      status,
-      reason: status === "missed" ? reason : "",
-    };
+    // Use FormData for the new compliance endpoint
+    const formData = new FormData();
+    formData.append('workoutPlanId', plan._id);
+    formData.append('date', selectedDate);
+    formData.append('status', status);
+    if (status === "missed" && reason) {
+      formData.append('reason', reason);
+    }
 
     try {
-      await fetch(buildApiUrl("/api/workouts/logs"), {
+      const token = localStorage.getItem("token");
+      const headers = { Accept: "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      await fetch(buildApiUrl("/api/workout-logs"), {
         method: "POST",
-        headers: authHeaders(),
+        headers: headers,
         credentials: "include",
-        body: JSON.stringify(body),
+        body: formData,
       });
       setReason("");
       fetchClientAndPlans();

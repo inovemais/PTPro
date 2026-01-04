@@ -11,15 +11,17 @@ import Header from './components/Header';
 // Pages
 import Login from './pages/Login';
 import LoginQR from './pages/LoginQR';
-import AdminTrainers from './pages/AdminTrainers';
-import AdminRequests from './pages/AdminRequests';
+import RegisterPage from './components/RegisterPage';
+import AdminUsers from './pages/AdminUsers';
 import TrainerClients from './pages/TrainerClients';
 import TrainerClientDetail from './pages/TrainerClientDetail';
 import TrainerPlans from './pages/TrainerPlans';
+import TrainerPlanDetail from './pages/TrainerPlanDetail';
 import ClientCalendar from './pages/ClientCalendar';
-import ClientCompliance from './pages/ClientCompliance';
 import ClientDashboard from './pages/ClientDashboard';
 import Chat from './pages/Chat';
+import Profile from './pages/Profile';
+import Dashboard from './components/Dashboard';
 
 // Import scopes
 import scopes from './data/users/scopes';
@@ -27,7 +29,7 @@ import scopes from './data/users/scopes';
 // Layout component
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
-  const hideHeader = location.pathname === '/login' || location.pathname === '/login-qr';
+  const hideHeader = location.pathname === '/login' || location.pathname === '/login-qr' || location.pathname === '/register';
 
   return (
     <div>
@@ -41,7 +43,12 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
           <SocketNotifications />
           <ToastContainer position="top-right" autoClose={3000} />
           <Layout>
@@ -49,21 +56,18 @@ function App() {
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/login-qr" element={<LoginQR />} />
+              <Route path="/register" element={<RegisterPage />} />
 
               {/* Admin routes */}
               <Route
                 path="/admin/trainers"
-                element={
-                  <RoleGuard allowedRoles={[scopes.Admin]}>
-                    <AdminTrainers />
-                  </RoleGuard>
-                }
+                element={<Navigate to="/admin/users" replace />}
               />
               <Route
-                path="/admin/requests"
+                path="/admin/users"
                 element={
                   <RoleGuard allowedRoles={[scopes.Admin]}>
-                    <AdminRequests />
+                    <AdminUsers />
                   </RoleGuard>
                 }
               />
@@ -86,10 +90,26 @@ function App() {
                 }
               />
               <Route
-                path="/trainer/plans/:clientId"
+                path="/trainer/plans"
                 element={
                   <RoleGuard allowedRoles={[scopes.Admin, scopes.PersonalTrainer]}>
                     <TrainerPlans />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/trainer/plans/new"
+                element={
+                  <RoleGuard allowedRoles={[scopes.Admin, scopes.PersonalTrainer]}>
+                    <TrainerPlanDetail />
+                  </RoleGuard>
+                }
+              />
+              <Route
+                path="/trainer/plans/:planId"
+                element={
+                  <RoleGuard allowedRoles={[scopes.Admin, scopes.PersonalTrainer]}>
+                    <TrainerPlanDetail />
                   </RoleGuard>
                 }
               />
@@ -100,14 +120,6 @@ function App() {
                 element={
                   <RoleGuard allowedRoles={[scopes.Client]}>
                     <ClientCalendar />
-                  </RoleGuard>
-                }
-              />
-              <Route
-                path="/client/compliance"
-                element={
-                  <RoleGuard allowedRoles={[scopes.Client]}>
-                    <ClientCompliance />
                   </RoleGuard>
                 }
               />
@@ -126,6 +138,26 @@ function App() {
                 element={
                   <RoleGuard allowedRoles={[scopes.Admin, scopes.PersonalTrainer, scopes.Client]}>
                     <Chat />
+                  </RoleGuard>
+                }
+              />
+
+              {/* Profile - available to all authenticated users */}
+              <Route
+                path="/profile"
+                element={
+                  <RoleGuard allowedRoles={[scopes.Admin, scopes.PersonalTrainer, scopes.Client]}>
+                    <Profile />
+                  </RoleGuard>
+                }
+              />
+
+              {/* Dashboard route - redirects based on user role */}
+              <Route
+                path="/dashboard"
+                element={
+                  <RoleGuard allowedRoles={[scopes.Admin, scopes.PersonalTrainer, scopes.Client]}>
+                    <Dashboard />
                   </RoleGuard>
                 }
               />

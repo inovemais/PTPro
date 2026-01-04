@@ -22,6 +22,7 @@ const TrainerPlansPage = () => {
     description: "",
     frequencyPerWeek: 3,
     startDate: "",
+    workoutDates: ["", "", ""], // Array inicial para 3 datas
   });
 
   useEffect(() => {
@@ -46,7 +47,7 @@ const TrainerPlansPage = () => {
     if (!clientId) return;
 
     fetch(
-      buildApiUrl(`/api/training-plans?clientId=${clientId}&limit=50&skip=0`),
+      buildApiUrl(`/api/plans?clientId=${clientId}&limit=50&skip=0`),
       {
         headers: authHeaders(),
         credentials: "include",
@@ -54,19 +55,46 @@ const TrainerPlansPage = () => {
     )
       .then((res) => res.json())
       .then((data) => {
-        setPlans(data.plans || []);
+        // Handle standardized response format: {success: true, data: [...], meta: {...}}
+        const plansList = data.success && data.data ? data.data : (data.plans || []);
+        setPlans(plansList);
       })
       .catch((err) => {
         console.error("Error fetching plans:", err);
       });
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => {
+      if (name === "frequencyPerWeek") {
+        const newFrequency = parseInt(value);
+        // Ajustar o array de datas baseado na nova frequência
+        const newWorkoutDates = Array(newFrequency).fill("").map((_, index) => 
+          prev.workoutDates[index] || ""
+        );
+        return {
+          ...prev,
+          [name]: value,
+          workoutDates: newWorkoutDates,
+        };
+      }
+      return {
+        ...prev,
+        [name]: value,
+      };
+    });
+  };
+
+  const handleWorkoutDateChange = (index: number, value: string) => {
+    setForm((prev) => {
+      const newWorkoutDates = [...prev.workoutDates];
+      newWorkoutDates[index] = value;
+      return {
+        ...prev,
+        workoutDates: newWorkoutDates,
+      };
+    });
   };
 
   const handleCreatePlan = (e: React.FormEvent) => {
@@ -79,9 +107,10 @@ const TrainerPlansPage = () => {
       description: form.description,
       frequencyPerWeek: Number(form.frequencyPerWeek),
       startDate: form.startDate || new Date().toISOString(),
+      workoutDates: form.workoutDates.filter(date => date !== "").map(date => new Date(date).toISOString()),
     };
 
-    fetch(buildApiUrl("/api/training-plans"), {
+    fetch(buildApiUrl("/api/plans"), {
       method: "POST",
       headers: authHeaders(),
       credentials: "include",
@@ -94,6 +123,7 @@ const TrainerPlansPage = () => {
           description: "",
           frequencyPerWeek: 3,
           startDate: "",
+          workoutDates: ["", "", ""],
         });
         fetchPlans();
       })
@@ -166,6 +196,22 @@ const TrainerPlansPage = () => {
                     value={form.startDate}
                     onChange={handleChange}
                   />
+                </FormGroup>
+                <FormGroup>
+                  <Label>Workout Dates ({form.frequencyPerWeek}x per week) *</Label>
+                  {form.workoutDates.map((date, index) => (
+                    <FormGroup key={index} className="mt-2">
+                      <Label for={`workoutDate${index}`}>Workout {index + 1}</Label>
+                      <Input
+                        id={`workoutDate${index}`}
+                        type="date"
+                        value={date}
+                        onChange={(e) => handleWorkoutDateChange(index, e.target.value)}
+                        required
+                        min={form.startDate || new Date().toISOString().split('T')[0]}
+                      />
+                    </FormGroup>
+                  ))}
                 </FormGroup>
                 <Button color="primary" type="submit">
                   Create Plan

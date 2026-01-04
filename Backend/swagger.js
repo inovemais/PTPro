@@ -563,7 +563,7 @@ const options = {
             }
           }
         },
-        ComplianceCreate: {
+        WorkoutLogCreate: {
           type: 'object',
           required: ['workoutPlanId', 'date', 'status'],
           properties: {
@@ -589,7 +589,7 @@ const options = {
             }
           }
         },
-        ComplianceUpdate: {
+        WorkoutLogUpdate: {
           type: 'object',
           properties: {
             status: {
@@ -672,8 +672,8 @@ const options = {
         description: 'Training plans management'
       },
       {
-        name: 'Compliance',
-        description: 'Workout compliance tracking'
+        name: 'WorkoutLogs',
+        description: 'Workout logs tracking'
       },
       {
         name: 'Chat',

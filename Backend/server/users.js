@@ -60,7 +60,6 @@ const UsersRouter = (io) => {
   router
   .route("/")
   .get(Users.autorize([scopes.Admin]), function (req, res, next) {
-    console.log("get all users");
 
     const pageLimit = req.query.limit ? parseInt(req.query.limit) : 10;
     const pageSkip = req.query.skip ? parseInt(req.query.skip) : 0;
@@ -84,7 +83,6 @@ const UsersRouter = (io) => {
         next();
       })
       .catch((err) => {
-        console.log(err.message);
         res.status(500).send({ error: err.message });
         next();
       });
@@ -147,21 +145,20 @@ const UsersRouter = (io) => {
    *         description: Unauthorized or Invalid scope (only Client or PersonalTrainer allowed)
    */
   .post(Users.autorize([scopes.Admin, scopes.PersonalTrainer]), function (req, res, next) {
-    console.log("Create user");
     let body = req.body;
     let { role } = body;
     
     // Get user scopes from token
     const decoded = req.decoded || {};
-    const userScopes = Array.isArray(decoded.role?.scope)
-      ? decoded.role.scope
-      : decoded.role?.scope
-      ? [decoded.role.scope]
+    // Parse role from JWT token - role is an array like ["PersonalTrainer"]
+    const userScopes = Array.isArray(decoded.role)
+      ? decoded.role
+      : decoded.role
+      ? [decoded.role]
       : [];
     const isAdmin = userScopes.includes(scopes.Admin);
     const isTrainer = userScopes.includes(scopes.PersonalTrainer) && !isAdmin;
 
-    console.log(role);
 
     // Validar que o scope é válido (Admin, PersonalTrainer ou Client)
     const validScopes = [scopes.Admin, scopes.PersonalTrainer, scopes.Client];
@@ -193,7 +190,6 @@ const UsersRouter = (io) => {
   router
     .route("/:userId")
     .put(Users.autorize([scopes.Admin]), function (req, res, next) {
-      console.log("update user by id");
       let userId = req.params.userId;
       let body = req.body;
 
@@ -205,6 +201,88 @@ const UsersRouter = (io) => {
         })
         .catch((err) => {
           res.status(404);
+          next();
+        });
+    });
+
+  /**
+   * @swagger
+   * /users/change-password:
+   *   put:
+   *     summary: Change user password
+   *     description: Change password for the authenticated user. Requires current password validation.
+   *     tags: [Users]
+   *     security:
+   *       - cookieAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [currentPassword, newPassword]
+   *             properties:
+   *               currentPassword:
+   *                 type: string
+   *                 format: password
+   *                 description: Current password
+   *               newPassword:
+   *                 type: string
+   *                 format: password
+   *                 description: New password (minimum 6 characters)
+   *           example:
+   *             currentPassword: "oldpassword123"
+   *             newPassword: "newpassword456"
+   *     responses:
+   *       200:
+   *         description: Password changed successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: "Password changed successfully"
+   *                 user:
+   *                   type: object
+   *       400:
+   *         description: Bad request - validation error
+   *       401:
+   *         description: Unauthorized or incorrect current password
+   *       404:
+   *         description: User not found
+   */
+  router
+    .route("/change-password")
+    .put(function (req, res, next) {
+      const decoded = req.decoded || {};
+      const userId = decoded.id;
+
+      if (!userId) {
+        return res.status(401).send({ error: "User ID not found in token" });
+      }
+
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword) {
+        return res.status(400).send({ error: "Current password is required" });
+      }
+
+      if (!newPassword) {
+        return res.status(400).send({ error: "New password is required" });
+      }
+
+      Users.changePassword(userId, currentPassword, newPassword)
+        .then((result) => {
+          res.status(200).send(result);
+          next();
+        })
+        .catch((err) => {
+          console.error("Error changing password:", err);
+          const statusCode = err.includes("not found") ? 404 : 
+                            err.includes("incorrect") ? 401 : 400;
+          res.status(statusCode).send({ error: err });
           next();
         });
     });

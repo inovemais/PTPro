@@ -68,7 +68,7 @@ const TrainerClientDetail = () => {
   const fetchComplianceStats = async () => {
     try {
       const response = await fetch(
-        buildApiUrl(`/api/compliance/stats?clientId=${id}&period=month`),
+        buildApiUrl(`/api/workout-logs/stats?clientId=${id}&period=month`),
         {
           headers: authHeaders(),
           credentials: "include",

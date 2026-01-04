@@ -1,0 +1,31 @@
+.sortSelector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  .label {
+    font-size: 0.875rem;
+    color: var(--text-secondary, #6c757d);
+    margin: 0;
+    white-space: nowrap;
+  }
+  
+  .select {
+    min-width: 150px;
+    border: 1px solid var(--border-color, #dee2e6);
+    background-color: var(--input-bg, #fff);
+    color: var(--text-color, #000);
+  }
+}
+
+@media (max-width: 768px) {
+  .sortSelector {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .label {
+      text-align: left;
+    }
+  }
+}
+

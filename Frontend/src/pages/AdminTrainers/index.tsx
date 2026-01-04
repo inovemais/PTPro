@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Row, Col, Table, Button, Spinner, Modal, ModalHeader, ModalBody, ModalFooter, Form, Label, Input } from 'reactstrap';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Row, Col, Table, Button, Spinner, Modal, ModalHeader, ModalBody, ModalFooter, Form, Label, Input, Container } from 'reactstrap';
+import { toast } from 'react-toastify';
 import apiClient from '../../lib/axios';
+import SearchBar from '../../components/SearchBar';
+import SortSelector, { SortOption } from '../../components/SortSelector';
+import PaginationComponent from '../../components/Pagination';
 import styles from './styles.module.scss';
 
 interface Trainer {
@@ -33,12 +37,15 @@ interface TrainerFormData {
 }
 
 const AdminTrainers: React.FC = () => {
+  const [allTrainers, setAllTrainers] = useState<Trainer[]>([]);
   const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingTrainer, setEditingTrainer] = useState<Trainer | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('-createdAt');
   const [formData, setFormData] = useState<TrainerFormData>({
     name: '',
     email: '',
@@ -63,28 +70,13 @@ const AdminTrainers: React.FC = () => {
         params: { limit: pagination.pageSize, skip },
       });
 
-      console.log('Trainers API response:', response.data);
+      // Standardized format: { success: true, data: [...], meta: { pagination: {...} } }
+      const trainersList = response.data.success && response.data.data 
+        ? response.data.data 
+        : [];
+      const total = response.data.meta?.pagination?.total || 0;
 
-      // Handle both response formats:
-      // Legacy format: { auth: true, trainers: [...], pagination: {...} }
-      // New format: { success: true, data: [...], meta: { pagination: {...} } }
-      let trainersList = [];
-      let total = 0;
-
-      if (response.data.success && response.data.data) {
-        // New format
-        trainersList = response.data.data || [];
-        total = response.data.meta?.pagination?.total || 0;
-      } else if (response.data.trainers) {
-        // Legacy format
-        trainersList = response.data.trainers || [];
-        total = response.data.pagination?.total || trainersList.length;
-      }
-
-      console.log('Parsed trainers list:', trainersList);
-      console.log('Total trainers:', total);
-
-      setTrainers(trainersList);
+      setAllTrainers(trainersList);
       setPagination({
         ...pagination,
         current: page,
@@ -93,7 +85,10 @@ const AdminTrainers: React.FC = () => {
     } catch (error: any) {
       console.error('Error fetching trainers:', error);
       console.error('Error response:', error.response?.data);
-      alert('Error loading trainers. Please check the console for details.');
+      toast.error('Erro ao carregar treinadores', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     } finally {
       setLoading(false);
     }
@@ -104,13 +99,91 @@ const AdminTrainers: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Apply search and sort filters
+  useEffect(() => {
+    let filtered = [...allTrainers];
+
+    // Apply search
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter((trainer) => {
+        const name = trainer.userId?.name?.toLowerCase() || '';
+        const email = trainer.userId?.email?.toLowerCase() || '';
+        const bio = trainer.bio?.toLowerCase() || '';
+        const specialties = trainer.specialties?.join(' ').toLowerCase() || '';
+        return name.includes(term) || email.includes(term) || bio.includes(term) || specialties.includes(term);
+      });
+    }
+
+    // Apply sort (client-side for now, since we fetch all)
+    filtered.sort((a, b) => {
+      let aValue: string, bValue: string;
+      
+      if (sortBy.includes('name')) {
+        aValue = a.userId?.name || '';
+        bValue = b.userId?.name || '';
+      } else if (sortBy.includes('email')) {
+        aValue = a.userId?.email || '';
+        bValue = b.userId?.email || '';
+      } else if (sortBy.includes('createdAt')) {
+        aValue = a.createdAt || '';
+        bValue = b.createdAt || '';
+      } else {
+        aValue = '';
+        bValue = '';
+      }
+
+      if (sortBy.startsWith('-')) {
+        return bValue.localeCompare(aValue);
+      }
+      return aValue.localeCompare(bValue);
+    });
+
+    setTrainers(filtered);
+    setPagination(prev => ({ ...prev, current: 1 })); // Reset to first page when filters change
+  }, [allTrainers, searchTerm, sortBy]);
+
+  const sortOptions: SortOption[] = [
+    { value: '-createdAt', label: 'Mais Recentes' },
+    { value: 'createdAt', label: 'Mais Antigos' },
+    { value: 'name', label: 'Nome (A-Z)' },
+    { value: '-name', label: 'Nome (Z-A)' },
+    { value: 'email', label: 'Email (A-Z)' },
+    { value: '-email', label: 'Email (Z-A)' },
+  ];
+
+  // Pagination logic
+  const totalPages = Math.ceil(trainers.length / pagination.pageSize);
+  const paginatedTrainers = useMemo(() => {
+    return trainers.slice(
+      (pagination.current - 1) * pagination.pageSize,
+      pagination.current * pagination.pageSize
+    );
+  }, [trainers, pagination.current, pagination.pageSize]);
+
+  const handlePageChange = (page: number) => {
+    setPagination(prev => ({ ...prev, current: page }));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleValidate = async (trainerId: string) => {
     try {
       await apiClient.put(`/trainers/${trainerId}`, { isValidated: true });
       fetchTrainers(pagination.current);
-    } catch (error) {
+      toast.success('Treinador validado com sucesso!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } catch (error: any) {
       console.error('Error validating trainer:', error);
-      alert('Error validating trainer. Please try again.');
+      const errorMessage = 
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        'Erro ao validar treinador. Por favor, tente novamente.';
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 5000,
+      });
     }
   };
 
@@ -118,9 +191,20 @@ const AdminTrainers: React.FC = () => {
     try {
       await apiClient.put(`/trainers/${trainerId}`, { isActive: !currentStatus });
       fetchTrainers(pagination.current);
-    } catch (error) {
+      toast.success(`Treinador ${!currentStatus ? 'ativado' : 'desativado'} com sucesso!`, {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    } catch (error: any) {
       console.error('Error toggling trainer status:', error);
-      alert('Error updating trainer status. Please try again.');
+      const errorMessage = 
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        'Erro ao atualizar status do treinador. Por favor, tente novamente.';
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 5000,
+      });
     }
   };
 
@@ -167,13 +251,20 @@ const AdminTrainers: React.FC = () => {
       // Refresh the trainers list
       await fetchTrainers(pagination.current);
       toggleEditModal();
+      toast.success('Treinador atualizado com sucesso!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     } catch (error: any) {
       console.error('Error updating trainer:', error);
-      alert(
+      const errorMessage = 
         error.response?.data?.error ||
-          error.response?.data?.message ||
-          'Error updating trainer. Please try again.'
-      );
+        error.response?.data?.message ||
+        'Erro ao atualizar treinador. Por favor, tente novamente.';
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 5000,
+      });
     } finally {
       setSubmitting(false);
     }
@@ -299,102 +390,148 @@ const AdminTrainers: React.FC = () => {
       // Refresh the trainers list
       await fetchTrainers(pagination.current);
       toggleModal();
+      toast.success('Treinador criado com sucesso!', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     } catch (error: any) {
       console.error('Error creating trainer:', error);
-      alert(
+      const errorMessage = 
         error.response?.data?.error ||
-          error.response?.data?.message ||
-          'Error creating trainer. Please try again.'
-      );
+        error.response?.data?.message ||
+        'Erro ao criar treinador. Por favor, tente novamente.';
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 5000,
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading && trainers.length === 0) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loadingContainer}>
-          <Spinner color="primary" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={styles.container}>
+    <Container className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Trainers Management</h1>
-        <Button className={styles.addButton} onClick={toggleModal}>
-          <span>+</span> Add Trainer
-        </Button>
       </div>
 
-      {trainers.length === 0 && !loading ? (
-        <div className={styles.emptyState}>
-          <p>No trainers found. Click "Add Trainer" to create a new trainer.</p>
+      <div className={styles.tabContent}>
+        <div className={styles.header}>
+          <h2>Trainers</h2>
+          <Button className={styles.addButton} onClick={toggleModal}>
+            <span>+</span> Add Trainer
+          </Button>
         </div>
-      ) : (
-        <div className={styles.card}>
-          <div className={styles.tableWrapper}>
-            <Table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Validation</th>
-                  <th>Active</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {trainers.map((trainer) => (
-                  <tr key={trainer._id}>
-                    <td className={styles.nameCell}>{trainer.userId?.name || 'N/A'}</td>
-                    <td className={styles.emailCell}>{trainer.userId?.email || 'N/A'}</td>
-                    <td>
-                      {trainer.isValidated ? (
-                        <span className={styles.badgeSuccess}>Validated</span>
-                      ) : (
-                        <span className={styles.badgeWarning}>Pending</span>
-                      )}
-                    </td>
-                    <td>
-                      {trainer.isActive !== false ? (
-                        <span className={styles.badgeSuccess}>Active</span>
-                      ) : (
-                        <span className={styles.badgeSecondary}>Inactive</span>
-                      )}
-                    </td>
-                    <td className={styles.actionsCell}>
-                      {!trainer.isValidated && (
-                        <button
-                          className={styles.validateButton}
-                          onClick={() => handleValidate(trainer._id)}
-                        >
-                          Validate
-                        </button>
-                      )}
-                      <button
-                        className={styles.editButton}
-                        onClick={() => toggleEditModal(trainer)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className={trainer.isActive !== false ? styles.deactivateButton : styles.activateButton}
-                        onClick={() => handleToggleActive(trainer._id, trainer.isActive !== false)}
-                      >
-                        {trainer.isActive !== false ? "Deactivate" : "Activate"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
+
+        <Row className="mb-3 mt-3">
+          <Col md={6}>
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Pesquisar por nome ou email"
+              onClear={() => setSearchTerm('')}
+            />
+          </Col>
+          <Col md={6} className="d-flex justify-content-end">
+            <SortSelector
+              value={sortBy}
+              onChange={setSortBy}
+              options={sortOptions}
+              label="Ordenar por:"
+            />
+          </Col>
+        </Row>
+
+        {loading && trainers.length === 0 ? (
+          <div className={styles.loadingContainer}>
+            <Spinner color="primary" />
           </div>
-        </div>
-      )}
+        ) : paginatedTrainers.length === 0 && allTrainers.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>No trainers found. Click "Add Trainer" to create a new trainer.</p>
+          </div>
+        ) : paginatedTrainers.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>No trainers found matching your search criteria.</p>
+          </div>
+        ) : (
+          <>
+            <div className={styles.card}>
+              <div className={styles.tableWrapper}>
+                <Table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Validation</th>
+                      <th>Active</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedTrainers.map((trainer) => (
+                      <tr key={trainer._id}>
+                        <td className={styles.nameCell}>{trainer.userId?.name || 'N/A'}</td>
+                        <td className={styles.emailCell}>{trainer.userId?.email || 'N/A'}</td>
+                        <td>
+                          {trainer.isValidated ? (
+                            <span className={styles.badgeSuccess}>Validated</span>
+                          ) : (
+                            <span className={styles.badgeWarning}>Pending</span>
+                          )}
+                        </td>
+                        <td>
+                          {trainer.isActive !== false ? (
+                            <span className={styles.badgeSuccess}>Active</span>
+                          ) : (
+                            <span className={styles.badgeSecondary}>Inactive</span>
+                          )}
+                        </td>
+                        <td className={styles.actionsCell}>
+                          {!trainer.isValidated && (
+                            <button
+                              className={styles.validateButton}
+                              onClick={() => handleValidate(trainer._id)}
+                            >
+                              Validate
+                            </button>
+                          )}
+                          <button
+                            className={styles.editButton}
+                            onClick={() => toggleEditModal(trainer)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className={trainer.isActive !== false ? styles.deactivateButton : styles.activateButton}
+                            onClick={() => handleToggleActive(trainer._id, trainer.isActive !== false)}
+                          >
+                            {trainer.isActive !== false ? "Deactivate" : "Activate"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
+            </div>
+
+            {trainers.length > 0 && (
+              <PaginationComponent
+                currentPage={pagination.current}
+                totalPages={totalPages}
+                pageSize={pagination.pageSize}
+                total={trainers.length}
+                onPageChange={handlePageChange}
+                showPageSize={true}
+                onPageSizeChange={(size) => {
+                  setPagination(prev => ({ ...prev, pageSize: size, current: 1 }));
+                }}
+              />
+            )}
+          </>
+        )}
+      </div>
 
       <Modal isOpen={modalOpen} toggle={toggleModal} size="lg" className={styles.modal}>
         <ModalHeader toggle={toggleModal}>Add New Trainer</ModalHeader>
@@ -511,8 +648,8 @@ const AdminTrainers: React.FC = () => {
         </Form>
       </Modal>
 
-      <Modal isOpen={editModalOpen} toggle={toggleEditModal} size="lg" className={styles.modal}>
-        <ModalHeader toggle={toggleEditModal}>Edit Trainer</ModalHeader>
+      <Modal isOpen={editModalOpen} toggle={() => toggleEditModal()} size="lg" className={styles.modal}>
+        <ModalHeader toggle={() => toggleEditModal()}>Edit Trainer</ModalHeader>
         <Form onSubmit={handleEdit}>
           <ModalBody>
             <div className={styles.formGroup}>
@@ -615,16 +752,16 @@ const AdminTrainers: React.FC = () => {
             </div>
           </ModalBody>
           <ModalFooter>
-            <Button className={styles.modalButtonSecondary} onClick={toggleEditModal} disabled={submitting}>
+            <Button className={styles.modalButtonSecondary} onClick={() => toggleEditModal()} disabled={submitting}>
               Cancel
             </Button>
             <Button className={styles.modalButtonPrimary} type="submit" disabled={submitting}>
               {submitting ? 'Updating...' : 'Update Trainer'}
             </Button>
-          </ModalFooter>
-        </Form>
-      </Modal>
-    </div>
+        </ModalFooter>
+      </Form>
+    </Modal>
+    </Container>
   );
 };
 

@@ -1,0 +1,61 @@
+.filtersContainer {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  border: 1px solid #dee2e6;
+}
+
+.weekdayCheckboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.checkboxLabel {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+
+  &:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+  }
+
+  input[type="checkbox"] {
+    margin-right: 0.5rem;
+  }
+
+  input[type="checkbox"]:checked ~ &,
+  &:has(input[type="checkbox"]:checked) {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+  }
+}
+
+.checkboxLabel:has(input[type="checkbox"]:checked) {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+@media (max-width: 768px) {
+  .weekdayCheckboxes {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .checkboxLabel {
+    width: 100%;
+  }
+}
+

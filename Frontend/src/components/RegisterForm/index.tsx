@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import styles from "./styles.module.scss";
 import { buildApiUrl } from "../../config/api";
 
@@ -32,7 +33,10 @@ const RegisterForm = () => {
 
   const onSubmit = (data: RegisterFormData) => {
     if (data.password !== data.confirmPassword) {
-      alert("As passwords não coincidem");
+      toast.error("As senhas não coincidem", {
+        position: 'top-right',
+        autoClose: 3000,
+      });
       return;
     }
     registerUser(data);
@@ -48,8 +52,8 @@ const RegisterForm = () => {
       email: userData.email,
       password: userData.password,
       role: {
-        name: "member",
-        scope: ["member"],
+        name: "client",
+        scope: ["client"],
       },
     };
 
@@ -82,8 +86,11 @@ const RegisterForm = () => {
       if (!res.ok) {
         const message =
           (body && body.message) ||
-          `Falha no registo (${res.status} ${res.statusText})`;
-        alert(message);
+          `Registration failed (${res.status} ${res.statusText})`;
+        toast.error(message, {
+          position: 'top-right',
+          autoClose: 5000,
+        });
         setLoading(false);
         return;
       }
@@ -96,11 +103,19 @@ const RegisterForm = () => {
         }
       }
 
+      // Mostrar mensagem informando que o registo está pendente de validação
+      toast.success("Registo criado com sucesso! O seu registo será validado por um administrador ou treinador em breve.", {
+        position: 'top-right',
+        autoClose: 5000,
+      });
       setIsRegistered(true);
       reset();
     } catch (error: any) {
       const message = error?.message || "Erro ao comunicar com o servidor";
-      alert(message);
+      toast.error(message, {
+        position: 'top-right',
+        autoClose: 5000,
+      });
     } finally {
       setLoading(false);
     }
@@ -115,13 +130,13 @@ const RegisterForm = () => {
     <div className={styles.registerFormContainer}>
       <div className={styles.registerForm}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Criar conta</h2>
-          <p className={styles.subtitle}>Preencha os dados para criar a sua conta</p>
+          <h2 className={styles.title}>Create Account</h2>
+          <p className={styles.subtitle}>Fill in the data to create your account</p>
         </div>
         
         <form className={styles.formRegister} onSubmit={handleSubmit(onSubmit)}>
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Credenciais</h3>
+            <h3 className={styles.sectionTitle}>Credentials</h3>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="email">
                 Email <span className={styles.required}>*</span>
@@ -150,7 +165,7 @@ const RegisterForm = () => {
                 {...register("password", {
                   minLength: {
                     value: 6,
-                    message: "A password deve ter pelo menos 6 caracteres"
+                    message: "Password must be at least 6 characters"
                   }
                 })}
                 disabled={loading}
@@ -172,7 +187,7 @@ const RegisterForm = () => {
                 className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ""}`}
                 {...register("confirmPassword", {
                   validate: (value) => 
-                    value === password || "As passwords não coincidem"
+                    value === password || "Passwords do not match"
                 })}
                 disabled={loading}
               />
@@ -183,7 +198,7 @@ const RegisterForm = () => {
           </div>
 
           <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Informações adicionais (opcional)</h3>
+            <h3 className={styles.sectionTitle}>Additional Information (optional)</h3>
             <div className={styles.row}>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="firstName">
@@ -256,7 +271,7 @@ const RegisterForm = () => {
             
             <div className={styles.field}>
               <label className={styles.label} htmlFor="address">
-                Morada
+                  Address
               </label>
               <input
                 id="address"
@@ -274,7 +289,7 @@ const RegisterForm = () => {
             className={styles.submitButton}
             disabled={loading}
           >
-            {loading ? "A criar..." : "Registar"}
+            {loading ? "Creating..." : "Register"}
           </button>
         </form>
       </div>

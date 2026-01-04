@@ -1,9 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { Container, Row, Col, Card, CardBody, CardTitle, Button, Form, FormGroup, Label, Input, Spinner } from 'reactstrap';
+import { useNavigate } from 'react-router-dom';
+import { Container, Row, Col, Table, Button, Spinner } from 'reactstrap';
+import { toast } from 'react-toastify';
 import apiClient from '../../lib/axios';
+import PlanFilters from '../../components/PlanFilters';
+import SearchBar from '../../components/SearchBar';
+import PaginationComponent from '../../components/Pagination';
 import styles from './styles.module.scss';
+
+interface Client {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+}
 
 interface Plan {
   _id: string;
@@ -12,158 +24,370 @@ interface Plan {
   frequencyPerWeek: number;
   startDate: string;
   isActive: boolean;
+  clientId: {
+    _id: string;
+    userId: {
+      name: string;
+      email: string;
+    };
+  };
   sessions?: any[];
 }
 
-interface PlanFormData {
-  name: string;
-  description: string;
-  frequencyPerWeek: 3 | 4 | 5;
-  startDate: string;
-}
-
 const TrainerPlans: React.FC = () => {
-  const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [allPlans, setAllPlans] = useState<Plan[]>([]); // All plans before search filter
+  const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(false);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<PlanFormData>();
+  
+  // Filter states
+  const [selectedClientId, setSelectedClientId] = useState('');
+  const [selectedFrequency, setSelectedFrequency] = useState('');
+  const [sortBy, setSortBy] = useState('-createdAt');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
-    if (clientId) {
-      fetchPlans();
+    fetchClients();
+    fetchPlans();
+  }, []);
+
+  useEffect(() => {
+    fetchPlans();
+  }, [selectedClientId, selectedFrequency, sortBy]);
+
+  // Apply search filter when searchTerm changes
+  useEffect(() => {
+    if (!searchTerm) {
+      setPlans(allPlans);
+      setCurrentPage(1);
+      return;
     }
-  }, [clientId]);
+
+    const term = searchTerm.toLowerCase();
+    const filtered = allPlans.filter((plan: Plan) => {
+      const planName = plan.name?.toLowerCase() || '';
+      const clientName = plan.clientId?.userId?.name?.toLowerCase() || '';
+      const clientEmail = plan.clientId?.userId?.email?.toLowerCase() || '';
+      const description = plan.description?.toLowerCase() || '';
+      
+      return planName.includes(term) || 
+             clientName.includes(term) || 
+             clientEmail.includes(term) ||
+             description.includes(term);
+    });
+    
+    setPlans(filtered);
+    setCurrentPage(1);
+  }, [searchTerm, allPlans]);
+
+  const fetchClients = async () => {
+    try {
+      const response = await apiClient.get('/clients');
+      // Standardized format: { success: true, data: [...], meta: { pagination: {...} } }
+      const clientsList = response.data.success && response.data.data 
+        ? response.data.data 
+        : [];
+      setClients(clientsList);
+    } catch (error: any) {
+      console.error('Error fetching clients:', error);
+      toast.error('Erro ao carregar clientes', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
+    }
+  };
 
   const fetchPlans = async () => {
-    if (!clientId) return;
     setLoading(true);
     try {
-      const response = await apiClient.get('/plans', {
-        params: { clientId, limit: 50 },
-      });
-      if (response.data.success) {
-        setPlans(response.data.data || []);
+      const params: any = {
+        limit: 100,
+        skip: 0,
+        sort: sortBy,
+      };
+
+      if (selectedClientId) {
+        params.clientId = selectedClientId;
       }
-    } catch (error) {
+
+      // If filtering by weekday, we need to fetch all and filter client-side
+      // since the backend filter works on sessions, not plans
+      const response = await apiClient.get('/plans', { params });
+      
+      // Standardized format: { success: true, data: [...], meta: { pagination: {...} } }
+      let plansList = response.data.success && response.data.data 
+        ? response.data.data 
+        : [];
+
+      // Filter by frequency per week
+      if (selectedFrequency) {
+        const frequency = parseInt(selectedFrequency);
+        plansList = plansList.filter((plan: Plan) => {
+          return plan.frequencyPerWeek === frequency;
+        });
+      }
+      
+      // Store all plans (before search filter) and apply search if needed
+      setAllPlans(plansList);
+      
+      // Apply search filter if searchTerm exists
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const filteredPlans = plansList.filter((plan: Plan) => {
+          const planName = plan.name?.toLowerCase() || '';
+          const clientName = plan.clientId?.userId?.name?.toLowerCase() || '';
+          const clientEmail = plan.clientId?.userId?.email?.toLowerCase() || '';
+          const description = plan.description?.toLowerCase() || '';
+          
+          return planName.includes(term) || 
+                 clientName.includes(term) || 
+                 clientEmail.includes(term) ||
+                 description.includes(term);
+        });
+        setPlans(filteredPlans);
+      } else {
+        setPlans(plansList);
+      }
+    } catch (error: any) {
       console.error('Error fetching plans:', error);
+      toast.error('Erro ao carregar planos', {
+        position: 'top-right',
+        autoClose: 3000,
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const onSubmit = async (data: PlanFormData) => {
-    if (!clientId) return;
+  const handleClientChange = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setCurrentPage(1);
+  };
+
+  const handleFrequencyChange = (frequency: string) => {
+    setSelectedFrequency(frequency);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (sort: string) => {
+    setSortBy(sort);
+    setCurrentPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedClientId('');
+    setSelectedFrequency('');
+    setSortBy('-createdAt');
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+  
+  // Pagination logic
+  const totalPages = Math.ceil(plans.length / pageSize);
+  const paginatedPlans = plans.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const getWeekdayLabel = (weekday: string): string => {
+    const labels: { [key: string]: string } = {
+      monday: 'Monday',
+      tuesday: 'Tuesday',
+      wednesday: 'Wednesday',
+      thursday: 'Thursday',
+      friday: 'Friday',
+      saturday: 'Saturday',
+      sunday: 'Sunday',
+    };
+    return labels[weekday] || weekday;
+  };
+
+  const handleDeletePlan = async (planId: string, planName: string) => {
+    const confirmMessage = `Are you sure you want to delete the plan "${planName}"?\n\nThis action cannot be undone.`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
 
     try {
-      await apiClient.post('/plans', {
-        ...data,
-        clientId,
-        // trainerId will be set by backend based on auth
+      await apiClient.delete(`/plans/${planId}`);
+      // Refresh the plans list
+      await fetchPlans();
+      toast.success('Plano deletado com sucesso!', {
+        position: 'top-right',
+        autoClose: 3000,
       });
-      reset();
-      fetchPlans();
-    } catch (error) {
-      console.error('Error creating plan:', error);
+    } catch (error: any) {
+      console.error('Error deleting plan:', error);
+      const errorMessage = 
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        'Erro ao deletar plano. Por favor, tente novamente.';
+      toast.error(errorMessage, {
+        position: 'top-right',
+        autoClose: 5000,
+      });
     }
   };
 
   return (
     <Container className={styles.container}>
-      <Row>
+      <div className={styles.header}>
+        <h2>Workout Plans</h2>
+        <Button className={styles.addButton} onClick={() => navigate('/trainer/plans/new')}>
+          <span>+</span> Create New Plan
+        </Button>
+      </div>
+
+      <Row className="mb-3 mt-3">
+        <Col md={6}>
+          <SearchBar
+            value={searchTerm}
+            onChange={setSearchTerm}
+            placeholder="Search by client name or email"
+            onClear={() => setSearchTerm('')}
+          />
+        </Col>
+      </Row>
+
+      <Row className="mb-3">
         <Col>
-          <Button color="secondary" onClick={() => navigate(-1)} className="mb-3">
-            ← Back
+          <PlanFilters
+            clients={clients}
+            selectedClientId={selectedClientId}
+            selectedFrequency={selectedFrequency}
+            sortBy={sortBy}
+            onClientChange={handleClientChange}
+            onFrequencyChange={handleFrequencyChange}
+            onSortChange={handleSortChange}
+            onClearFilters={handleClearFilters}
+          />
+        </Col>
+      </Row>
+
+      {loading ? (
+        <div className={styles.loadingContainer}>
+          <Spinner color="primary" />
+        </div>
+      ) : paginatedPlans.length === 0 ? (
+        <div className={styles.emptyState}>
+          <h5>No plans found</h5>
+          <p>There are no workout plans registered yet.</p>
+          <Button className={styles.addButton} onClick={() => navigate('/trainer/plans/new')}>
+            <span>+</span> Create First Plan
           </Button>
-          <h2>Training Plans for Client</h2>
-        </Col>
-      </Row>
-
-      <Row className="mt-4">
-        <Col md={6}>
-          <Card>
-            <CardBody>
-              <CardTitle tag="h4">Create New Plan</CardTitle>
-              <Form onSubmit={handleSubmit(onSubmit)}>
-                <FormGroup>
-                  <Label for="name">Name</Label>
-                  <Input
-                    id="name"
-                    {...register('name', { required: 'Name is required' })}
-                    invalid={!!errors.name}
-                  />
-                  {errors.name && <div className="text-danger small">{errors.name.message}</div>}
-                </FormGroup>
-
-                <FormGroup>
-                  <Label for="description">Description</Label>
-                  <Input
-                    id="description"
-                    type="textarea"
-                    {...register('description')}
-                  />
-                </FormGroup>
-
-                <FormGroup>
-                  <Label for="frequencyPerWeek">Frequency per Week</Label>
-                  <Input
-                    id="frequencyPerWeek"
-                    type="select"
-                    {...register('frequencyPerWeek', { required: true })}
-                  >
-                    <option value={3}>3x per week</option>
-                    <option value={4}>4x per week</option>
-                    <option value={5}>5x per week</option>
-                  </Input>
-                </FormGroup>
-
-                <FormGroup>
-                  <Label for="startDate">Start Date</Label>
-                  <Input
-                    id="startDate"
-                    type="date"
-                    {...register('startDate')}
-                  />
-                </FormGroup>
-
-                <Button color="primary" type="submit">
-                  Create Plan
-                </Button>
-              </Form>
-            </CardBody>
-          </Card>
-        </Col>
-
-        <Col md={6}>
-          <Card>
-            <CardBody>
-              <CardTitle tag="h4">Existing Plans</CardTitle>
-              {loading ? (
-                <Spinner>Loading...</Spinner>
-              ) : plans.length === 0 ? (
-                <p>No plans created yet.</p>
-              ) : (
-                <ul>
-                  {plans.map((plan) => (
-                    <li key={plan._id}>
-                      <strong>{plan.name}</strong>
-                      {plan.description && ` – ${plan.description}`}
-                      <br />
-                      <small>
-                        Frequency: {plan.frequencyPerWeek}x/week | Status:{' '}
-                        {plan.isActive ? 'Active' : 'Inactive'}
-                      </small>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardBody>
-          </Card>
-        </Col>
-      </Row>
+        </div>
+      ) : (
+        <>
+          <div className={styles.card}>
+            <div className={styles.tableWrapper}>
+              <Table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Client</th>
+                    <th>Frequency</th>
+                    <th>Sessions</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedPlans.map((plan) => {
+                    try {
+                      const uniqueWeekdays = [
+                        ...new Set((plan.sessions || []).map((s: any) => s?.weekday).filter(Boolean)),
+                      ];
+                      const uniqueWeeks = [
+                        ...new Set((plan.sessions || []).map((s: any) => s?.week).filter(Boolean)),
+                      ];
+                      
+                      return (
+                        <tr key={plan._id}>
+                          <td className={styles.nameCell}>
+                            <strong>{plan.name || 'Unnamed Plan'}</strong>
+                            {plan.description && (
+                              <div className={styles.description}>{plan.description}</div>
+                            )}
+                          </td>
+                          <td className={styles.clientCell}>
+                            {plan.clientId?.userId?.name || plan.clientId?.userId?.email || 'N/A'}
+                          </td>
+                          <td>{plan.frequencyPerWeek || 0}x per week</td>
+                          <td>
+                            <div className={styles.sessionsInfo}>
+                              {uniqueWeeks.length > 0 ? (
+                                <>
+                                  {uniqueWeeks.length} week{uniqueWeeks.length !== 1 ? 's' : ''}, {' '}
+                                  {uniqueWeekdays.length} day{uniqueWeekdays.length !== 1 ? 's' : ''}: {' '}
+                                  {uniqueWeekdays
+                                    .map((w) => getWeekdayLabel(w))
+                                    .join(', ')}
+                                </>
+                              ) : (
+                                'No sessions'
+                              )}
+                            </div>
+                          </td>
+                          <td className={styles.actionsCell}>
+                            <button
+                              className={styles.editButton}
+                              onClick={() => navigate(`/trainer/plans/${plan._id}`)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className={styles.deleteButton}
+                              onClick={() => handleDeletePlan(plan._id, plan.name)}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    } catch (error) {
+                      console.error('Error rendering plan row:', error, plan);
+                      return (
+                        <tr key={plan._id || 'error'}>
+                          <td colSpan={5} style={{ color: 'red' }}>
+                            Error rendering plan: {plan.name || plan._id || 'Unknown'}
+                          </td>
+                        </tr>
+                      );
+                    }
+                  })}
+                </tbody>
+              </Table>
+            </div>
+          </div>
+          
+          {plans.length > 0 && (
+            <PaginationComponent
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              total={plans.length}
+              onPageChange={handlePageChange}
+              showPageSize={true}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setCurrentPage(1);
+              }}
+            />
+          )}
+        </>
+      )}
     </Container>
   );
 };
 
 export default TrainerPlans;
-

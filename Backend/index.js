@@ -249,11 +249,6 @@ app.use((req, res, next) => {
     return res.end();
   }
   // Para outras rotas não encontradas
-  console.log('❌ Route not found handler triggered');
-  console.log('❌ Method:', req.method);
-  console.log('❌ Path:', req.path);
-  console.log('❌ URL:', req.url);
-  console.log('❌ Original URL:', req.originalUrl);
   res.status(404).json({ error: 'Route not found' });
 });
 
@@ -308,18 +303,12 @@ app.use((err, req, res, next) => {
 
 // Eventos de conexão Socket.IO
 io.on('connection', (socket) => {
-  console.log('Socket.IO client connected:', socket.id);
-
   // Permitir que clientes se juntem a rooms baseados no userId
   socket.on('join', (userId) => {
     if (userId) {
-      socket.join(String(userId));
-      console.log(`Socket ${socket.id} joined room for user ${userId}`);
+      const roomId = String(userId);
+      socket.join(roomId);
     }
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Socket.IO client disconnected:', socket.id);
   });
 });
 
@@ -327,7 +316,6 @@ io.on('connection', (socket) => {
 // IMPORTANTE: Sempre escutar na porta, mesmo se houver erros anteriores
 try {
   server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}`);
   }).on('error', (err) => {
     console.error('Server listen error:', err);
     console.error('Error code:', err.code);

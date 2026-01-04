@@ -1,0 +1,32 @@
+.container {
+  padding: 2rem 0;
+}
+
+.card {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+.cardTitle {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.qrCodeContainer {
+  display: inline-block;
+  padding: 1rem;
+  background-color: #fff;
+  border: 2px solid #dee2e6;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.qrCodeImage {
+  display: block;
+  max-width: 300px;
+  height: auto;
+}
+

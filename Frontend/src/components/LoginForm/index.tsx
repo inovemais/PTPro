@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
 import { Row, Col } from "reactstrap";
+import { toast } from "react-toastify";
 import styles from "./styles.module.scss";
 import { Navigate, Link } from "react-router-dom";
 import { useState } from "react";
@@ -20,7 +21,6 @@ interface LoginFormData {
 interface LoginResponse {
   token?: string;
   auth?: boolean;
-  qrCode?: string;
   message?: string;
 }
 
@@ -38,7 +38,6 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
   const [isLogged, setLogged] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [loginMode, setLoginMode] = useState<"form" | "qr-scan">("form");
-  const [qrCode, setQrCode] = useState<string | null>(null);
 
   const onSubmit = (data: LoginFormData) => login(data);
 
@@ -69,9 +68,12 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
       }
 
       if (!res.ok) {
-        const message = body?.message || `Falha no Login (${res.status})`;
+        const message = body?.message || `Login Failed (${res.status})`;
         console.error("Login error:", message, body);
-        alert(message);
+        toast.error(message, {
+          position: 'top-right',
+          autoClose: 5000,
+        });
         setLoading(false);
         return;
       }
@@ -81,7 +83,6 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
       console.log("🔐 Login response received:", {
         hasToken: !!body?.token,
         hasAuth: !!body?.auth,
-        hasQrCode: !!body?.qrCode,
         responseKeys: Object.keys(body || {})
       });
       
@@ -104,16 +105,9 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
       console.log("🔐 Authentication status:", isAuthenticated, "Token in body:", !!body?.token);
       console.log("🔐 Full response body:", JSON.stringify(body, null, 2));
       
-      // Se o login retornou QR code, guardá-lo
-      if (body?.qrCode) {
-        setQrCode(body.qrCode);
-        // Também marcar como logado, pois o login foi bem-sucedido
-        setLogged(isAuthenticated);
-        console.log("📱 QR Code received, user is authenticated");
-      } else {
-        setLogged(isAuthenticated);
-        console.log("✅ Login successful, redirecting...");
-      }
+      // Login bem-sucedido, redirecionar
+      setLogged(isAuthenticated);
+      console.log("✅ Login successful, redirecting...");
     } catch (error: any) {
       console.error("❌ Network/Connection error:", error);
       console.error("Error details:", {
@@ -124,21 +118,19 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
       });
       
       // Mensagem de erro mais detalhada
-      const errorMessage = error?.message || "Erro desconhecido";
+      const errorMessage = error?.message || "Unknown error";
       const isNetworkError = error?.name === "TypeError" || error?.message?.includes("fetch");
       
       if (isNetworkError) {
-        alert(
-          `Erro na ligação ao servidor.\n\n` +
-          `URL: ${apiUrl}\n` +
-          `Erro: ${errorMessage}\n\n` +
-          `Verifique se:\n` +
-          `- O servidor backend está a correr\n` +
-          `- A URL está correta\n` +
-          `- Não há problemas de CORS`
-        );
+        toast.error('Erro ao conectar ao servidor. Verifique se o servidor está em execução.', {
+          position: 'top-right',
+          autoClose: 5000,
+        });
       } else {
-        alert(`Erro: ${errorMessage}`);
+        toast.error(`Erro: ${errorMessage}`, {
+          position: 'top-right',
+          autoClose: 5000,
+        });
       }
     } finally {
       setLoading(false);
@@ -163,7 +155,10 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
         result = await res.json();
       } catch (parseError) {
         console.error("❌ Failed to parse JSON response:", parseError);
-        alert("Erro ao processar resposta do servidor");
+        toast.error("Erro ao processar resposta do servidor", {
+          position: 'top-right',
+          autoClose: 5000,
+        });
         setLoading(false);
         return;
       }
@@ -190,45 +185,24 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
       } else {
         const errorMsg = result.error || result.message || "Login failed";
         console.error("❌ QR Code login failed:", errorMsg);
-        alert(errorMsg);
+        toast.error(errorMsg, {
+          position: 'top-right',
+          autoClose: 5000,
+        });
       }
     } catch (err: any) {
       console.error("❌ Error validating QR code:", err);
-      const errorMessage = err?.message || "Erro ao validar QR code";
-      alert(`Erro: ${errorMessage}`);
+      const errorMessage = err?.message || "Error validating QR code";
+      toast.error(`Erro: ${errorMessage}`, {
+        position: 'top-right',
+        autoClose: 5000,
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCloseQRCode = () => {
-    console.log("🔐 Closing QR code, verifying authentication...");
-    
-    // Verificar se o token existe antes de fechar o QR code
-    const token = localStorage.getItem("token");
-    console.log("🔐 Token check before closing QR code:", token ? `Present (${token.substring(0, 20)}...)` : 'NOT FOUND');
-    
-    if (!token) {
-      console.error("❌ CRITICAL: No token found in localStorage!");
-      console.error("❌ This will cause authentication to fail");
-      console.error("❌ Checking if token was ever saved...");
-      
-      // Tentar verificar se o token foi salvo em algum momento
-      const allKeys = Object.keys(localStorage);
-      console.log("🔍 All localStorage keys:", allKeys);
-      
-      // Se não houver token, tentar fazer uma última verificação
-      // Mas ainda assim permitir o redirecionamento para ver o erro
-      alert("Aviso: Token não encontrado. A autenticação pode falhar. Verifique o console para mais detalhes.");
-    } else {
-      console.log("✅ Token found, length:", token.length);
-    }
-    
-    setQrCode(null);
-    setLogged(true);
-  };
-
-  if (isLogged && !qrCode) {
+  if (isLogged) {
     return <Navigate to="/dashboard" replace={true} />;
   }
 
@@ -245,28 +219,11 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
             </svg>
           </div>
           <h1 className={styles.logoTitle}>PTPro</h1>
-          <p className={styles.logoSubtitle}>Sistema de Gestão de Ginásios</p>
+          <p className={styles.logoSubtitle}>Gym Management System</p>
         </div>
         
-        {qrCode ? (
-          // Mostrar QR code após login
-          <div className={styles.loginContent}>
-            <div className={styles.qrCodeSection}>
-              <h3>Your Login QR Code</h3>
-              <div className={styles.qrCodeContainer}>
-                <img src={qrCode} alt="Your Login QR Code" className={styles.qrCodeImage} />
-              </div>
-              <button 
-                onClick={handleCloseQRCode} 
-                className={styles.closeButton}
-              >
-                Continue to Dashboard
-              </button>
-            </div>
-          </div>
-        ) : (
-          // Formulário de login
-          <>
+        {/* Formulário de login */}
+        <>
             {/* Botões para escolher modo de login */}
             <div className={styles.loginModeButtons}>
               <button
@@ -297,7 +254,7 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
                       type="email"
                       autoComplete="email"
                       required
-                      placeholder="Insira o seu email"
+                      placeholder="Enter your email"
                       className={styles.input}
                       {...register("email")}
                       disabled={loading}
@@ -305,14 +262,14 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
                   </div>
                   <div className={styles.field}>
                     <label className={styles.label} htmlFor="password">
-                      Palavra-passe
+                      Password
                     </label>
                     <input
                       id="password"
                       type="password"
                       autoComplete="current-password"
                       required
-                      placeholder="Insira a sua palavra-passe"
+                      placeholder="Enter your password"
                       className={styles.input}
                       {...register("password")}
                       disabled={loading}
@@ -323,7 +280,7 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
                     className={styles.submitButton}
                     disabled={loading}
                   >
-                    {loading ? "A iniciar sessão..." : "Iniciar Sessão"}
+                    {loading ? "Logging in..." : "Login"}
                   </button>
                   <div className={styles.registerLink}>
                     <span>No account? </span>
@@ -338,11 +295,7 @@ const LoginForm = ({ title, role }: LoginFormProps) => {
                 <QRCodeLogin onScanSuccess={handleQRScanSuccess} />
               )}
             </div>
-
-            
-            
           </>
-        )}
       </div>
     </div>
   );

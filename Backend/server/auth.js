@@ -17,10 +17,6 @@ function AuthRouter() {
   
   // Debug middleware para ver todas as rotas chamadas
   router.use((req, res, next) => {
-    console.log(`🔍 Auth Router - ${req.method} ${req.path}`);
-    console.log(`🔍 Full URL: ${req.method} ${req.url}`);
-    console.log(`🔍 Original URL: ${req.originalUrl}`);
-    console.log(`🔍 Base URL: ${req.baseUrl}`);
     next();
   });
 
@@ -107,14 +103,12 @@ function AuthRouter() {
   // Endpoint público para registro de admin (apenas para desenvolvimento/testes)
   // IMPORTANTE: Esta rota DEVE estar antes de /register para funcionar corretamente
   router.post("/register/admin", function (req, res, next) {
-    console.log('✅✅✅ /register/admin endpoint called - ADMIN REGISTRATION');
     const body = req.body;
-    console.log('Request body:', JSON.stringify(body, null, 2));
     
     const { role } = body;
 
     // Accept either a string or array for scope; must contain 'admin'
-    const scopes = Array.isArray(role && role.scope) ? role.scope : [role && role.scope];
+    const roleScopes = Array.isArray(role && role.scope) ? role.scope : [role && role.scope];
     if(!scopes.includes('admin')) {
       return res.status(401).send({ auth: false, message: 'Only create Admin via this endpoint' })
     }
@@ -202,7 +196,6 @@ function AuthRouter() {
             maxAge: 86400000 // 24 horas
           });
           
-          console.log(`🍪 QR Code login cookie set: secure=${isSecure}, sameSite=${isSecure ? 'none' : 'lax'}`);
           res.status(200).send({
             success: true,
             auth: true,
@@ -275,7 +268,7 @@ function AuthRouter() {
    *                   example: false
    *                 message:
    *                   type: string
-   *                   example: "Only create Member"
+   *                   example: "Only create Client"
    *       500:
    *         description: Server error (e.g., duplicate email, name, or taxNumber)
    *         content:
@@ -288,11 +281,12 @@ function AuthRouter() {
     const body = req.body;
     
     const { role } = body;
+    const scopes = require("../data/users/scopes");
 
-    // Accept either a string or array for scope; must contain 'member'
-    const scopes = Array.isArray(role && role.scope) ? role.scope : [role && role.scope];
-    if(!scopes.includes('member')) {
-      return res.status(401).send({ auth: false, message: 'Only create Member' })
+    // Accept either a string or array for scope; must contain 'client'
+    const roleScopes = Array.isArray(role && role.scope) ? role.scope : [role && role.scope];
+    if(!roleScopes.includes(scopes.Client)) {
+      return res.status(401).send({ auth: false, message: 'Only create Client' })
     }
 
     // Se não foi fornecido um nome, gerar a partir do email
@@ -319,8 +313,32 @@ function AuthRouter() {
 
     checkAndGenerateUniqueName(body.name)
       .then(() => {
-        // Criar member diretamente - o membro será criado automaticamente pelo middleware
+        // Criar user com role client
         return Users.create(body);
+      })
+      .then((saved) => {
+        // Criar perfil de cliente automaticamente com isValidated: false
+        const Clients = require("../data/clients");
+        const clientData = {
+          userId: saved.user._id,
+          isValidated: false, // Cliente precisa ser validado por admin/trainer
+        };
+        
+        // Adicionar campos opcionais do body se existirem
+        if (body.heightCm) clientData.heightCm = body.heightCm;
+        if (body.weightKg) clientData.weightKg = body.weightKg;
+        if (body.goal) clientData.goal = body.goal;
+        if (body.notes) clientData.notes = body.notes;
+
+        return Clients.ClientService.create(clientData)
+          .then(() => saved)
+          .catch((err) => {
+            // Se já existe perfil de cliente, continuar (pode acontecer em caso de retry)
+            if (err.message && err.message.includes("already exists")) {
+              return saved;
+            }
+            throw err;
+          });
       })
       .then((saved) => Users.createToken(saved.user))
       .then((response) => {
@@ -328,6 +346,7 @@ function AuthRouter() {
         res.send(response);
       })
       .catch((err) => {
+        console.error("Error in registration:", err);
         res.status(500);
         res.send(err);
         next();
@@ -379,19 +398,8 @@ function AuthRouter() {
    */
   // Endpoint público para login
   router.route("/login").post(function (req, res, next) {
-    console.log('\n\n\n\n\n');
-    console.log('========================================');
-    console.log('🚀🚀🚀 LOGIN ENDPOINT CALLED 🚀🚀🚀');
-    console.log('========================================');
-    console.log('🚀 Request method:', req.method);
-    console.log('🚀 Request path:', req.path);
-    console.log('🚀 Request body type:', typeof req.body);
-    console.log('🚀 Request body:', req.body);
     let body = req.body;
-    console.log('🔍 Has name?', !!body?.name, 'Name value:', body?.name);
-    console.log('🔍 Has password?', !!body?.password, 'Password length:', body?.password?.length);
     if (body.name && !body.email) { body.email = body.name; }
-    console.log('🔍 Calling findUser with:', { email: body.email, hasPassword: !!body.password, passwordLength: body.password?.length });
 
     return Users.findUser(body)
       .then((user) => {
@@ -419,8 +427,6 @@ function AuthRouter() {
         
         res.cookie("token", response.token, cookieOptions);
         
-        console.log(`🍪 Cookie set: secure=${isSecure}, sameSite=${cookieOptions.sameSite}, domain=${req.headers.host}`);
-        console.log(`🍪 Cookie will be sent to: ${req.headers.origin || 'same-origin'}`);
         
         // Gerar QR code para login futuro
         const userId = response.decoded?.id || response.user?._id?.toString();
@@ -447,10 +453,6 @@ function AuthRouter() {
               user: response.user,
               qrCode: qrCodeImage
             };
-            console.log('📤 Sending login response with QR code');
-            console.log('📤 Response includes token:', !!responseBody.token);
-            console.log('📤 Response includes auth:', !!responseBody.auth);
-            console.log('📤 Token value (first 20 chars):', responseBody.token ? responseBody.token.substring(0, 20) + '...' : 'MISSING');
             res.send(responseBody);
           } catch (qrErr) {
             console.error('Error generating QR code:', qrErr);
@@ -467,15 +469,10 @@ function AuthRouter() {
             decoded: response.decoded,
             user: response.user
           };
-          console.log('📤 Sending login response without QR code');
-          console.log('📤 Response includes token:', !!responseBody.token);
-          console.log('📤 Response includes auth:', !!responseBody.auth);
-          console.log('📤 Token value (first 20 chars):', responseBody.token ? responseBody.token.substring(0, 20) + '...' : 'MISSING');
           res.send(responseBody);
         }
       })
       .catch((err) => {
-        console.log('Login error:', err);
         // Retornar 401 para credenciais inválidas
         const errorMessage = err === "This data is wrong" || err === "User not valid" 
           ? "Credenciais inválidas" 

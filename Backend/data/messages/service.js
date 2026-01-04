@@ -8,7 +8,7 @@ function MessageService(MessageModel) {
 
   /**
    * Create a new message
-   * @param {Object} message - Message data { senderId, receiverId, content }
+   * @param {Object} message - Message data { senderId, receiverId, text }
    * @returns {Promise} Created message
    */
   function create(message) {
@@ -20,8 +20,10 @@ function MessageService(MessageModel) {
       if (!message.receiverId) {
         return reject(new Error("receiverId is required"));
       }
-      if (!message.content || message.content.trim() === "") {
-        return reject(new Error("content is required"));
+      // Support both 'text' (current) and 'content' (legacy) for backward compatibility
+      const messageText = message.text || message.content;
+      if (!messageText || messageText.trim() === "") {
+        return reject(new Error("text is required"));
       }
 
       // Prevent sending message to self
@@ -29,7 +31,14 @@ function MessageService(MessageModel) {
         return reject(new Error("Cannot send message to yourself"));
       }
 
-      const model = new MessageModel(message);
+      // Ensure we use 'text' field for the model
+      const messageData = {
+        senderId: message.senderId,
+        receiverId: message.receiverId,
+        text: messageText,
+      };
+
+      const model = new MessageModel(messageData);
       model.save(function (err, savedMessage) {
         if (err) return reject(err);
         resolve(savedMessage);
@@ -100,7 +109,9 @@ function MessageService(MessageModel) {
       // Use Promise.all for parallel execution
       Promise.all([
         MessageModel.find(criteria)
-          .sort({ createdAt: -1 })
+          .populate("senderId", "name email")
+          .populate("receiverId", "name email")
+          .sort({ createdAt: 1 }) // Ascending order for chat (oldest first)
           .skip(skip)
           .limit(limit)
           .exec(),

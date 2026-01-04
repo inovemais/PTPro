@@ -1,4 +1,240 @@
+@use "sass:color";
+@import "../../styles/variables";
+@import "../../styles/mixins";
+
 .container {
-  padding: 2rem;
+  padding: $spacing-xl;
+  max-width: 1400px;
+  margin: 0 auto;
+  
+  @media (max-width: $breakpoint-md) {
+    padding: $spacing-md;
+  }
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-2xl;
+  padding-bottom: $spacing-lg;
+  border-bottom: 2px solid rgba(99, 102, 241, 0.1);
+  
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    gap: $spacing-md;
+    align-items: flex-start;
+  }
+  
+  h2 {
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0;
+    background: linear-gradient(135deg, $primary-gradient-start 0%, $primary-gradient-end 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.addButton {
+  @include button-primary;
+  padding: $spacing-md $spacing-xl;
+  border-radius: $radius-lg;
+  font-size: $font-size-base;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-lg;
+  }
+}
+
+.card {
+  background: $bg-primary;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-md;
+  overflow: hidden;
+  transition: all $transition-base;
+  
+  &:hover {
+    box-shadow: $shadow-lg;
+  }
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  
+  thead {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(219, 61, 47, 0.05) 100%);
+    
+    th {
+      padding: $spacing-lg;
+      text-align: left;
+      font-weight: $font-weight-semibold;
+      font-size: $font-size-sm;
+      color: $text-primary;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid rgba(99, 102, 241, 0.1);
+      
+      &:first-child {
+        padding-left: $spacing-xl;
+      }
+      
+      &:last-child {
+        padding-right: $spacing-xl;
+      }
+    }
+  }
+  
+  tbody {
+    tr {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      transition: all $transition-fast;
+      
+      &:hover {
+        background-color: rgba(99, 102, 241, 0.02);
+      }
+      
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+    
+    td {
+      padding: $spacing-lg;
+      font-size: $font-size-base;
+      color: $text-primary;
+      
+      &:first-child {
+        padding-left: $spacing-xl;
+      }
+      
+      &:last-child {
+        padding-right: $spacing-xl;
+      }
+    }
+  }
+}
+
+.nameCell {
+  font-weight: $font-weight-medium;
+  color: $text-primary;
+}
+
+.clientCell {
+  color: $text-primary;
+}
+
+.emailCell {
+  color: $text-secondary;
+  font-size: $font-size-sm;
+}
+
+.actionsCell {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.actionButton {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border: none;
+  cursor: pointer;
+  transition: all $transition-base;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: $shadow-sm;
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.editButton {
+  @extend .actionButton;
+  background: $info-color;
+  color: white;
+  
+  &:hover {
+    background: color.scale($info-color, $lightness: -5%);
+  }
+}
+
+.deleteButton {
+  @extend .actionButton;
+  background: $error-color;
+  color: white;
+  
+  &:hover {
+    background: color.scale($error-color, $lightness: -5%);
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-3xl;
+  background: $bg-primary;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-md;
+  
+  h5 {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-semibold;
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+  }
+  
+  p {
+    font-size: $font-size-lg;
+    color: $text-secondary;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  background: $bg-primary;
+  border-radius: $radius-xl;
+  box-shadow: $shadow-md;
+}
+
+.description {
+  color: $text-secondary;
+  font-size: $font-size-sm;
+  margin-top: $spacing-xs;
+}
+
+.sessionsInfo {
+  color: $text-secondary;
+  font-size: $font-size-sm;
+}

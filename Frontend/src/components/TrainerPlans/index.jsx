@@ -13,6 +13,7 @@ const TrainerPlans = () => {
     description: "",
     frequencyPerWeek: 3,
     startDate: "",
+    workoutDates: ["", "", ""], // Array inicial para 3 datas
   });
 
   useEffect(() => {
@@ -41,7 +42,9 @@ const TrainerPlans = () => {
     })
       .then((res) => res.json())
       .then((data) => {
-        setClients(data.clients || []);
+        // Handle standardized response format: {success: true, data: [...], meta: {...}}
+        const clientsList = data.success && data.data ? data.data : (data.clients || []);
+        setClients(clientsList);
       })
       .catch((err) => {
         console.error("Error fetching clients:", err);
@@ -49,13 +52,15 @@ const TrainerPlans = () => {
   };
 
   const fetchPlans = (clientId) => {
-    fetch(buildApiUrl(`/api/workouts/plans?clientId=${clientId}&limit=50&skip=0`), {
+    fetch(buildApiUrl(`/api/plans?clientId=${clientId}&limit=50&skip=0`), {
       headers: authHeaders(),
       credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {
-        setPlans(data.plans || []);
+        // Handle standardized response format: {success: true, data: [...], meta: {...}}
+        const plansList = data.success && data.data ? data.data : (data.plans || []);
+        setPlans(plansList);
       })
       .catch((err) => {
         console.error("Error fetching plans:", err);
@@ -64,10 +69,35 @@ const TrainerPlans = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => {
+      if (name === "frequencyPerWeek") {
+        const newFrequency = parseInt(value);
+        // Ajustar o array de datas baseado na nova frequência
+        const newWorkoutDates = Array(newFrequency).fill("").map((_, index) => 
+          prev.workoutDates[index] || ""
+        );
+        return {
+          ...prev,
+          [name]: value,
+          workoutDates: newWorkoutDates,
+        };
+      }
+      return {
+        ...prev,
+        [name]: value,
+      };
+    });
+  };
+
+  const handleWorkoutDateChange = (index, value) => {
+    setForm((prev) => {
+      const newWorkoutDates = [...prev.workoutDates];
+      newWorkoutDates[index] = value;
+      return {
+        ...prev,
+        workoutDates: newWorkoutDates,
+      };
+    });
   };
 
   const handleCreatePlan = (e) => {
@@ -81,9 +111,10 @@ const TrainerPlans = () => {
       description: form.description,
       frequencyPerWeek: Number(form.frequencyPerWeek),
       startDate: form.startDate || new Date().toISOString(),
+      workoutDates: form.workoutDates.filter(date => date !== "").map(date => new Date(date).toISOString()),
     };
 
-    fetch(buildApiUrl("/api/workouts/plans"), {
+    fetch(buildApiUrl("/api/plans"), {
       method: "POST",
       headers: authHeaders(),
       credentials: "include",
@@ -96,6 +127,7 @@ const TrainerPlans = () => {
           description: "",
           frequencyPerWeek: 3,
           startDate: "",
+          workoutDates: ["", "", ""],
         });
         fetchPlans(selectedClientId);
       })
@@ -185,6 +217,22 @@ const TrainerPlans = () => {
                     value={form.startDate}
                     onChange={handleChange}
                   />
+                </FormGroup>
+                <FormGroup>
+                  <Label>Datas dos treinos ({form.frequencyPerWeek}x por semana) *</Label>
+                  {form.workoutDates.map((date, index) => (
+                    <FormGroup key={index} className="mt-2">
+                      <Label for={`workoutDate${index}`}>Treino {index + 1}</Label>
+                      <Input
+                        id={`workoutDate${index}`}
+                        type="date"
+                        value={date}
+                        onChange={(e) => handleWorkoutDateChange(index, e.target.value)}
+                        required
+                        min={form.startDate || new Date().toISOString().split('T')[0]}
+                      />
+                    </FormGroup>
+                  ))}
                 </FormGroup>
                 <Button color="primary" type="submit" disabled={!selectedClientId}>
                   Criar plano

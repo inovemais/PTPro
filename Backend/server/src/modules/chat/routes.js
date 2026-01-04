@@ -80,5 +80,39 @@ router.get(
   controller.getThreads
 );
 
+/**
+ * @swagger
+ * /api/chat/workout-missed-alert:
+ *   post:
+ *     summary: Send alert message to client about missed workout (trainer only)
+ *     tags: [Chat]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - clientId
+ *             properties:
+ *               clientId:
+ *                 type: string
+ *               text:
+ *                 type: string
+ *               workoutDate:
+ *                 type: string
+ *                 format: date
+ *     responses:
+ *       201:
+ *         description: Alert message sent successfully
+ */
+router.post(
+  "/workout-missed-alert",
+  authorize([scopes.Admin, scopes.PersonalTrainer]),
+  controller.sendWorkoutMissedAlert
+);
+
 module.exports = router;
 

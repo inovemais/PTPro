@@ -1,69 +1,32 @@
-import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { buildApiUrl } from "../../config/api";
+import { useAuth } from "../../context/AuthContext";
+import scopes from "../../data/users/scopes";
 
 const Dashboard = () => {
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const headers: HeadersInit = { Accept: "application/json" };
-        
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        const response = await fetch(buildApiUrl("/api/auth/me"), {
-          headers,
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.auth && data.decoded && data.decoded.role) {
-            const scopes = Array.isArray(data.decoded.role.scope)
-              ? data.decoded.role.scope
-              : data.decoded.role.scope
-              ? [data.decoded.role.scope]
-              : [];
-            
-            // Determinar o role principal
-            if (scopes.includes("admin")) {
-              setUserRole("admin");
-            } else if (scopes.includes("PersonalTrainer")) {
-              setUserRole("trainer");
-            } else if (scopes.includes("client")) {
-              setUserRole("client");
-            } else {
-              setUserRole("user");
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserRole();
-  }, []);
+  const { scopes: userScopes, loading } = useAuth();
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return <div>Loading...</div>;
   }
 
-  // Redirecionar baseado no role
-  if (userRole === "admin") {
-    return <Navigate to="/admin" replace />;
-  } else if (userRole === "trainer") {
-    return <Navigate to="/trainer" replace />;
-  } else {
-    return <Navigate to="/user" replace />;
+  // Ensure userScopes is an array
+  const scopesArray = Array.isArray(userScopes) ? userScopes : [];
+
+  // Redirect based on user role/scope - check in priority order
+  if (scopesArray.includes(scopes.Admin)) {
+    return <Navigate to="/admin/users" replace />;
   }
+  
+  if (scopesArray.includes(scopes.PersonalTrainer)) {
+    return <Navigate to="/trainer/clients" replace />;
+  }
+  
+  if (scopesArray.includes(scopes.Client)) {
+    return <Navigate to="/client/dashboard" replace />;
+  }
+
+  // Fallback to login if no valid scope
+  return <Navigate to="/login" replace />;
 };
 
 export default Dashboard;

@@ -12,11 +12,11 @@ async function list(req, res) {
       { limit: parseInt(limit), skip: parseInt(skip) }
     );
 
-    sendSuccess(res, result.trainers, {
+    return sendSuccess(res, result.trainers, {
       pagination: result.pagination,
     });
   } catch (error) {
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 
@@ -31,11 +31,11 @@ async function listPublic(req, res) {
       { limit: parseInt(limit), skip: parseInt(skip) }
     );
 
-    sendSuccess(res, result.trainers, {
+    return sendSuccess(res, result.trainers, {
       pagination: result.pagination,
     });
   } catch (error) {
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 
@@ -51,9 +51,9 @@ async function getById(req, res) {
       return sendError(res, "Trainer not found", 404);
     }
 
-    sendSuccess(res, trainer);
+    return sendSuccess(res, trainer);
   } catch (error) {
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 
@@ -70,12 +70,12 @@ async function create(req, res) {
     }
 
     const trainer = await service.create(trainerData);
-    sendSuccess(res, trainer.trainer, {}, 201);
+    return sendSuccess(res, trainer.trainer, {}, 201);
   } catch (error) {
     if (error.code === 11000) {
       return sendValidationError(res, "Trainer profile already exists for this user");
     }
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 
@@ -94,9 +94,9 @@ async function update(req, res) {
     }
 
     const trainer = await service.update(id, updateData);
-    sendSuccess(res, trainer);
+    return sendSuccess(res, trainer);
   } catch (error) {
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 
@@ -112,9 +112,9 @@ async function validate(req, res) {
       return sendError(res, "Trainer not found", 404);
     }
 
-    sendSuccess(res, trainer);
+    return sendSuccess(res, trainer);
   } catch (error) {
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 
@@ -131,9 +131,9 @@ async function remove(req, res) {
     }
 
     await service.removeById(id);
-    sendSuccess(res, { message: "Trainer deleted successfully" });
+    return sendSuccess(res, { message: "Trainer deleted successfully" });
   } catch (error) {
-    sendError(res, error, 500);
+    return sendError(res, error, 500);
   }
 }
 

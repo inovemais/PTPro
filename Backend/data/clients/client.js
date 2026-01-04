@@ -10,6 +10,7 @@ let ClientSchema = new Schema(
     weightKg: { type: Number },
     goal: { type: String }, // objetivo principal (perder peso, ganhar massa, etc.)
     notes: { type: String },
+    isValidated: { type: Boolean, default: false }, // indica se o registo do cliente foi validado por admin/trainer
   },
   { timestamps: true }
 );

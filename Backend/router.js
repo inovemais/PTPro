@@ -1,27 +1,24 @@
 const express = require('express');
 const VerifyToken = require('./middleware/token');
 
-// Legacy modules (maintain for compatibility)
+// Legacy modules (maintain for compatibility - some will be deprecated)
 let AuthAPI = require('./server/auth');
 let UsersAPI = require('./server/users');
-let TrainersAPI = require('./server/trainers');
-let ClientsAPI = require('./server/clients');
-let WorkoutsAPI = require('./server/workouts');
+// TrainersAPI, ClientsAPI, ChatAPI, ComplianceAPI (now workout-logs), WorkoutsAPI removed - using new modules instead
 let MessagesAPI = require('./server/messages');
-let TrainerChangeRequestsAPI = require('./server/trainerChangeRequests');
+// TrainerChangeRequestsAPI removed - using changeRequestsModule instead
+// TrainingPlansAPI removed - using plansModule instead
 let TrainerProfilesAPI = require('./server/trainer-profiles');
 let ClientProfilesAPI = require('./server/client-profiles');
-let ChatAPI = require('./server/chat');
-let TrainingPlansAPI = require('./server/training-plans');
-let ComplianceAPI = require('./server/compliance');
 let QRCodeAPI = require('./server/qrcode');
+let ExercisesAPI = require('./server/exercises');
 
 // New modular structure
 const trainersModule = require('./server/src/modules/trainers');
 const clientsModule = require('./server/src/modules/clients');
 const changeRequestsModule = require('./server/src/modules/change-requests');
 const plansModule = require('./server/src/modules/plans');
-const complianceModule = require('./server/src/modules/compliance');
+const workoutLogsModule = require('./server/src/modules/workout-logs');
 const chatModule = require('./server/src/modules/chat');
 const uploadsModule = require('./server/src/modules/uploads');
 
@@ -35,27 +32,22 @@ function init (io) {
     api.use('/auth', AuthAPI());
     api.use('/qrcode', QRCodeAPI());
 
-    // Protected routes - Legacy (maintain for compatibility)
+    // Protected routes - New modular routes (with standardized responses)
+    // Note: These routes are mounted at /api in index.js, so we don't need /api prefix here
+    api.use('/trainers', VerifyToken, trainersModule);
+    api.use('/clients', VerifyToken, clientsModule);
+    api.use('/change-requests', VerifyToken, changeRequestsModule);
+    api.use('/plans', VerifyToken, plansModule);
+    api.use('/workout-logs', VerifyToken, workoutLogsModule);
+    api.use('/chat', VerifyToken, chatModule);
+    api.use('/uploads', VerifyToken, uploadsModule);
+
+    // Protected routes - Legacy (no new module equivalent yet, but will be standardized)
     api.use('/users', VerifyToken, UsersAPI(io));
-    api.use('/trainers', VerifyToken, TrainersAPI());
-    api.use('/clients', VerifyToken, ClientsAPI());
-    api.use('/workouts', VerifyToken, WorkoutsAPI());
     api.use('/messages', VerifyToken, MessagesAPI(io));
-    api.use('/trainer-change-requests', VerifyToken, TrainerChangeRequestsAPI());
+    api.use('/exercises', VerifyToken, ExercisesAPI());
     api.use('/trainer-profiles', VerifyToken, TrainerProfilesAPI());
     api.use('/client-profiles', VerifyToken, ClientProfilesAPI());
-    api.use('/chat', VerifyToken, ChatAPI(io));
-    api.use('/training-plans', VerifyToken, TrainingPlansAPI());
-    api.use('/compliance', VerifyToken, ComplianceAPI(io));
-
-    // New modular routes (with standardized responses)
-    api.use('/api/trainers', VerifyToken, trainersModule);
-    api.use('/api/clients', VerifyToken, clientsModule);
-    api.use('/api/change-requests', VerifyToken, changeRequestsModule);
-    api.use('/api/plans', VerifyToken, plansModule);
-    api.use('/api/compliance', VerifyToken, complianceModule);
-    api.use('/api/chat', VerifyToken, chatModule);
-    api.use('/api/uploads', VerifyToken, uploadsModule);
 
     return api;
 }

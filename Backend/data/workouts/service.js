@@ -80,21 +80,17 @@ function WorkoutService() {
             return reject(new Error("Plan not found"));
           }
 
-          // Clean undefined fields
+          // Clean undefined fields and exclude immutable fields
           const cleanData = {};
           Object.keys(data).forEach((key) => {
+            // Exclude immutable fields (trainerId and clientId cannot be changed)
+            if (key === 'trainerId' || key === 'clientId') {
+              return;
+            }
             if (data[key] !== undefined) {
               cleanData[key] = data[key];
             }
           });
-
-          // Don't allow updating trainerId or clientId (should be immutable)
-          if (cleanData.trainerId && cleanData.trainerId !== existing.trainerId.toString()) {
-            return reject(new Error("Cannot change trainerId"));
-          }
-          if (cleanData.clientId && cleanData.clientId !== existing.clientId.toString()) {
-            return reject(new Error("Cannot change clientId"));
-          }
 
           // Update plan
           return WorkoutPlan.findByIdAndUpdate(
@@ -103,7 +99,8 @@ function WorkoutService() {
             { new: true, runValidators: true }
           )
             .populate("trainerId")
-            .populate("clientId");
+            .populate("clientId")
+            .exec();
         })
         .then((updated) => {
           if (!updated) {
@@ -128,7 +125,13 @@ function WorkoutService() {
 
       WorkoutPlan.findById(id)
         .populate("trainerId")
-        .populate("clientId")
+        .populate({
+          path: "clientId",
+          populate: {
+            path: "userId",
+            select: "name email"
+          }
+        })
         .exec(function (err, plan) {
           if (err) return reject(err);
           if (!plan) {
@@ -141,12 +144,12 @@ function WorkoutService() {
 
   /**
    * Find all workout plans with filters and pagination
-   * @param {Object} query - Query filters { search, sort, clientId, trainerId, isActive }
+   * @param {Object} query - Query filters { search, sort, clientId, trainerId, isActive, weekday }
    * @param {Object} pagination - Pagination { limit, skip }
    * @returns {Promise} Object with plans array and pagination info
    */
   function findPlans(query, pagination) {
-    const { search, sort, clientId, trainerId, isActive } = query;
+    const { search, sort, clientId, trainerId, isActive, weekday } = query;
     const { limit, skip } = pagination;
 
     const criteria = {};
@@ -155,6 +158,11 @@ function WorkoutService() {
     if (trainerId) criteria.trainerId = trainerId;
     if (typeof isActive !== "undefined") {
       criteria.isActive = isActive === true || isActive === "true";
+    }
+
+    // Filter by weekday in sessions
+    if (weekday) {
+      criteria["sessions.weekday"] = weekday;
     }
 
     if (search) {
@@ -184,7 +192,13 @@ function WorkoutService() {
       Promise.all([
         WorkoutPlan.find(criteria)
           .populate("trainerId")
-          .populate("clientId")
+          .populate({
+            path: "clientId",
+            populate: {
+              path: "userId",
+              select: "name email"
+            }
+          })
           .sort(sortObj)
           .skip(skip)
           .limit(limit)
