@@ -120,10 +120,37 @@ A aplicação estará disponível em `http://localhost:5173` (porta padrão do V
 
 ## Estrutura de Rotas da API
 
-- `/auth` - Autenticação e autorização
-- `/users` - Gestão de utilizadores
-- `/trainers` - Gestão de treinadores
-- `/clients` - Gestão de clientes
-- `/workouts` - Gestão de planos de treino
-- `/trainer-change-requests` - Pedidos de mudança de treinador
-- `/messages` - Mensagens em tempo real
+Todas as rotas são prefixadas com `/api`:
+
+- `/api/auth` - Autenticação e autorização
+- `/api/users` - Gestão de utilizadores
+- `/api/trainers` - Gestão de treinadores
+- `/api/clients` - Gestão de clientes
+- `/api/plans` - Gestão de planos de treino
+- `/api/workout-logs` - Registos de treino
+- `/api/change-requests` - Pedidos de mudança de treinador
+- `/api/messages` - Mensagens em tempo real
+- `/api/chat` - Chat em tempo real
+- `/api/uploads` - Upload de ficheiros
+- `/api/exercises` - Gestão de exercícios
+- `/api-docs` - Documentação Swagger/OpenAPI
+
+## Deploy
+
+### Backend (Render)
+O backend está deployado no Render. Configuração disponível em `render.yaml`.
+
+**Variáveis de Ambiente Necessárias:**
+- `MONGODB_URI` ou `MONGO_URI`: String de conexão MongoDB Atlas
+- `SECRET`: Chave secreta para JWT
+- `FRONTEND_URL`: URL do frontend (https://pt-pro.vercel.app)
+- `NODE_ENV`: production
+- `RENDER`: true
+
+### Frontend (Vercel)
+O frontend está deployado no Vercel. Configuração disponível em `vercel.json`.
+
+**Variáveis de Ambiente Necessárias:**
+- `VITE_API_URL`: URL do backend (https://ptpro.onrender.com)
+
+Para mais informações detalhadas sobre o deploy, consulte os ficheiros `DEPLOY.md` e `CHECKLIST-DEPLOY.md`.
