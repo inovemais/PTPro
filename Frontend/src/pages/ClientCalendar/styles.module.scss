@@ -1,0 +1,445 @@
+.container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.title {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+// Stats Cards
+.statCard {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3498db;
+  margin-bottom: 0.25rem;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: #7f8c8d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+// Calendar
+.calendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #ecf0f1;
+}
+
+.navButton {
+  font-size: 1.5rem;
+  color: #3498db;
+  padding: 0.25rem 0.75rem;
+  text-decoration: none;
+  
+  &:hover {
+    color: #2980b9;
+    text-decoration: none;
+  }
+  
+  &:focus {
+    box-shadow: none;
+  }
+}
+
+.monthTitle {
+  margin: 0;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+  margin-bottom: 1.5rem;
+}
+
+.weekdayHeader {
+  text-align: center;
+  font-weight: 600;
+  color: #7f8c8d;
+  padding: 0.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.calendarDay {
+  aspect-ratio: 1;
+  min-height: 50px;
+  max-height: 70px;
+  border: 1.5px solid #ecf0f1;
+  border-radius: 6px;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: white;
+  
+  &:hover {
+    border-color: #3498db;
+    transform: scale(1.08);
+    box-shadow: 0 3px 10px rgba(52, 152, 219, 0.25);
+    z-index: 10;
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  &.hovered {
+    border-color: #3498db;
+    box-shadow: 0 3px 12px rgba(52, 152, 219, 0.3);
+    z-index: 10;
+  }
+  
+  &.otherMonth {
+    opacity: 0.25;
+    cursor: default;
+    
+    &:hover {
+      transform: none;
+      border-color: #ecf0f1;
+      box-shadow: none;
+    }
+  }
+  
+  &.today {
+    border-color: #3498db;
+    background: #ebf5fb;
+    font-weight: 600;
+    border-width: 2px;
+  }
+  
+  &.past {
+    opacity: 0.6;
+  }
+  
+  &.statusCompleted {
+    background: #d4edda;
+    border-color: #28a745;
+    
+    &:hover {
+      border-color: #218838;
+      background: #c3e6cb;
+    }
+  }
+  
+  &.statusPartial {
+    background: #fff3cd;
+    border-color: #ffc107;
+    
+    &:hover {
+      border-color: #e0a800;
+      background: #ffeaa7;
+    }
+  }
+  
+  &.statusMissed {
+    background: #f8d7da;
+    border-color: #dc3545;
+    
+    &:hover {
+      border-color: #c82333;
+      background: #f5c6cb;
+    }
+  }
+  
+  &.scheduledWorkout {
+    background: #e3f2fd;
+    border-color: #2196f3;
+    
+    &:hover {
+      border-color: #1976d2;
+      background: #bbdefb;
+    }
+  }
+}
+
+.dayNumber {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #2c3e50;
+  line-height: 1;
+}
+
+.dayStatus {
+  font-size: 0.875rem;
+  margin-top: 0.15rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scheduledIndicator {
+  font-size: 0.5rem;
+  color: #2196f3;
+  margin-top: 0.1rem;
+  line-height: 1;
+}
+
+.hoverTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2c3e50;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  animation: fadeIn 0.2s ease;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #2c3e50;
+  }
+  
+  strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+  }
+}
+
+.tooltipReason {
+  font-size: 0.7rem;
+  opacity: 0.9;
+  margin-top: 0.25rem;
+  max-width: 200px;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.tooltipHint {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.tooltipExercises {
+  margin-top: 0.5rem;
+  max-width: 250px;
+  white-space: normal;
+}
+
+.tooltipExercise {
+  font-size: 0.7rem;
+  opacity: 0.9;
+  margin-top: 0.2rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.tooltipMore {
+  font-size: 0.65rem;
+  opacity: 0.7;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  gap: 1rem;
+  color: #7f8c8d;
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  padding-top: 1rem;
+  border-top: 2px solid #ecf0f1;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #7f8c8d;
+}
+
+.legendColor {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid;
+  
+  &.statusCompleted {
+    background: #d4edda;
+    border-color: #28a745;
+  }
+  
+  &.statusPartial {
+    background: #fff3cd;
+    border-color: #ffc107;
+  }
+  
+  &.statusMissed {
+    background: #f8d7da;
+    border-color: #dc3545;
+  }
+  
+  &.scheduledWorkout {
+    background: #e3f2fd;
+    border-color: #2196f3;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .calendarGrid {
+    gap: 0.2rem;
+  }
+  
+  .calendarDay {
+    padding: 0.2rem;
+    min-height: 40px;
+    max-height: 55px;
+  }
+  
+  .dayNumber {
+    font-size: 0.75rem;
+  }
+  
+  .dayStatus {
+    font-size: 0.75rem;
+  }
+  
+  .statValue {
+    font-size: 1.5rem;
+  }
+  
+  .legend {
+    gap: 1rem;
+  }
+  
+  .hoverTooltip {
+    font-size: 0.65rem;
+    padding: 0.4rem 0.6rem;
+    max-width: 150px;
+  }
+}
+
+// Modal styles
+.plannedWorkoutSection {
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.exercisesList {
+  margin-top: 1rem;
+}
+
+.exercisesTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.75rem;
+}
+
+.exerciseItem {
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #2196f3;
+}
+
+.exerciseName {
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.exerciseDetails {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.exerciseSetsReps {
+  font-size: 0.875rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+.exerciseRest {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.exerciseInstructions {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.logDetailsSection {
+  margin-bottom: 1.5rem;
+}
+

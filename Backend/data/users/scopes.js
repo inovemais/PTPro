@@ -1,6 +1,5 @@
-module.exports= {
-    'Admin': 'admin',
-    'Member': 'member',
-    'NonMember': 'notMember',
-    'Anonimous': 'anonimous',
-}
+module.exports = {
+    Admin: 'admin',
+    PersonalTrainer: 'PersonalTrainer',
+    Client: 'client',
+};

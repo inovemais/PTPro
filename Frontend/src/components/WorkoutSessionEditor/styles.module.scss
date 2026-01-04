@@ -1,0 +1,67 @@
+.sessionEditor {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border: 2px solid #dee2e6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sessionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e9ecef;
+
+  .sessionTitle {
+    h5 {
+      margin: 0;
+      color: #495057;
+      font-weight: 600;
+    }
+  }
+}
+
+.exercisesSection {
+  margin-top: 1.5rem;
+}
+
+.exercisesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+
+  h6 {
+    margin: 0;
+    color: #6c757d;
+    font-weight: 600;
+  }
+}
+
+.maxExercisesAlert {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.noExercises {
+  text-align: center;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 1px dashed #dee2e6;
+
+  p {
+    margin: 0;
+    color: #6c757d;
+  }
+}
+
+.exercisesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+

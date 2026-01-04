@@ -1,0 +1,22 @@
+.searchBar {
+  max-width: 400px;
+  
+  input {
+    border: 1px solid var(--border-color, #dee2e6);
+  }
+}
+
+.clearButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  color: var(--text-secondary, #6c757d);
+  
+  &:hover {
+    color: var(--text-color, #000);
+  }
+}
+

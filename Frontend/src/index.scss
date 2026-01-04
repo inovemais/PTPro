@@ -1,17 +1,42 @@
 // Import Bootstrap SCSS for customization
 @import "bootstrap/scss/bootstrap";
 
+// Import Design System
+@import "./styles/variables";
+@import "./styles/mixins";
+
 // Custom global styles
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: $font-family-primary;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: $bg-secondary;
+  color: $text-primary;
+}
+
+// Tema claro/escuro simples
+body.theme-light {
+  background-color: $bg-primary;
+  color: $text-primary;
+}
+
+body.theme-dark {
+  background-color: $bg-dark;
+  color: #e5e7eb;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+// Reset e estilos globais
+* {
+  box-sizing: border-box;
+}
+
+button {
+  cursor: pointer;
+  font-family: $font-family-primary;
 }

@@ -4,12 +4,12 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'EstadioPWA API',
+      title: 'PTPro API',
       version: '1.0.0',
-      description: 'API documentation for Estadio - Stadium Management System',
+      description: 'API documentation for PTPro - Personal Trainer Management System',
       contact: {
         name: 'API Support',
-        email: 'support@estadio.com'
+        email: 'support@ptpro.com'
       },
     },
     servers: [
@@ -64,7 +64,7 @@ const options = {
                   type: 'array',
                   items: {
                     type: 'string',
-                    enum: ['admin', 'member', 'notMember', 'anonimous']
+                    enum: ['admin', 'PersonalTrainer', 'client']
                   }
                 }
               }
@@ -84,154 +84,6 @@ const options = {
             taxNumber: {
               type: 'number',
               description: 'Tax identification number (unique)'
-            },
-            memberId: {
-              type: 'string',
-              description: 'Reference to Member document'
-            },
-            tickets: {
-              type: 'array',
-              items: {
-                type: 'string'
-              },
-              description: 'Array of ticket IDs'
-            }
-          }
-        },
-        Member: {
-          type: 'object',
-          properties: {
-            _id: {
-              type: 'string',
-              description: 'Member ID'
-            },
-            taxNumber: {
-              type: 'string',
-              description: 'Tax identification number'
-            },
-            photo: {
-              type: 'string',
-              description: 'Photo URL or path'
-            },
-            userId: {
-              type: 'string',
-              description: 'Reference to User document'
-            }
-          }
-        },
-        Game: {
-          type: 'object',
-          properties: {
-            _id: {
-              type: 'string',
-              description: 'Game ID',
-              example: '507f1f77bcf86cd799439011'
-            },
-            name: {
-              type: 'string',
-              description: 'Game name',
-              example: 'FC Porto vs Benfica'
-            },
-            date: {
-              type: 'string',
-              format: 'date-time',
-              description: 'Game date and time',
-              example: '2024-12-25T20:00:00.000Z'
-            },
-            stadiumId: {
-              type: 'string',
-              description: 'Reference to Stadium document',
-              example: '507f1f77bcf86cd799439012'
-            },
-            image: {
-              type: 'string',
-              description: 'Game image URL',
-              example: '/uploads/games/game-1234567890.png'
-            }
-          }
-        },
-        Ticket: {
-          type: 'object',
-          properties: {
-            _id: {
-              type: 'string',
-              description: 'Ticket ID',
-              example: '507f1f77bcf86cd799439013'
-            },
-            sector: {
-              type: 'string',
-              description: 'Stadium sector',
-              example: 'Sector A'
-            },
-            price: {
-              type: 'number',
-              description: 'Ticket price',
-              example: 25.50
-            },
-            gameId: {
-              type: 'string',
-              description: 'Reference to Game document',
-              example: '507f1f77bcf86cd799439011'
-            },
-            userId: {
-              type: 'string',
-              description: 'Reference to User document',
-              example: '507f1f77bcf86cd799439014'
-            },
-            isMember: {
-              type: 'boolean',
-              description: 'Whether the ticket was purchased with member discount',
-              example: true
-            }
-          }
-        },
-        Stadium: {
-          type: 'object',
-          properties: {
-            _id: {
-              type: 'string',
-              description: 'Stadium ID',
-              example: '507f1f77bcf86cd799439012'
-            },
-            name: {
-              type: 'string',
-              description: 'Stadium name',
-              example: 'Estádio do Dragão'
-            },
-            sectors: {
-              type: 'array',
-              description: 'Stadium sectors with pricing',
-              items: {
-                type: 'object',
-                properties: {
-                  sector: {
-                    type: 'string',
-                    example: 'Sector A'
-                  },
-                  price: {
-                    type: 'number',
-                    description: 'Regular ticket price',
-                    example: 30.00
-                  },
-                  priceMember: {
-                    type: 'number',
-                    description: 'Member ticket price',
-                    example: 25.00
-                  }
-                }
-              },
-              example: [
-                {
-                  sector: 'Sector A',
-                  price: 30.00,
-                  priceMember: 25.00
-                },
-                {
-                  sector: 'Sector B',
-                  price: 25.00,
-                  priceMember: 20.00
-                }
-              ]
             }
           }
         },
@@ -250,11 +102,12 @@ const options = {
         },
         LoginRequest: {
           type: 'object',
-          required: ['name', 'password'],
+          required: ['email', 'password'],
           properties: {
-            name: {
+            email: {
               type: 'string',
-              description: 'Username'
+              format: 'email',
+              description: 'User email'
             },
             password: {
               type: 'string',
@@ -309,7 +162,7 @@ const options = {
               type: 'string',
               format: 'email',
               description: 'User email (must be unique)',
-              example: 'admin@estadio.com'
+              example: 'admin@ptpro.com'
             },
             password: {
               type: 'string',
@@ -330,9 +183,9 @@ const options = {
                   type: 'array',
                   items: {
                     type: 'string',
-                    enum: ['admin', 'member', 'notMember', 'anonimous']
+                    enum: ['admin', 'PersonalTrainer', 'client']
                   },
-                  description: 'Must include "admin" to create an admin user',
+                  description: 'Must include "admin" to create an admin user, or "client"/"PersonalTrainer" for other users',
                   example: ['admin']
                 }
               }
@@ -395,6 +248,401 @@ const options = {
               }
             }
           }
+        },
+        StandardResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: true
+            },
+            data: {
+              type: 'object',
+              description: 'Response data'
+            },
+            meta: {
+              type: 'object',
+              description: 'Metadata (pagination, etc.)'
+            }
+          }
+        },
+        ErrorResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: false
+            },
+            data: {
+              type: 'null'
+            },
+            meta: {
+              type: 'object',
+              properties: {
+                error: {
+                  type: 'string'
+                }
+              }
+            }
+          }
+        },
+        ValidationErrorResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              example: false
+            },
+            data: {
+              type: 'null'
+            },
+            meta: {
+              type: 'object',
+              properties: {
+                error: {
+                  type: 'string'
+                },
+                errors: {
+                  type: 'object'
+                }
+              }
+            }
+          }
+        },
+        Trainer: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string'
+            },
+            userId: {
+              type: 'object',
+              $ref: '#/components/schemas/User'
+            },
+            bio: {
+              type: 'string'
+            },
+            specialties: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
+            },
+            isValidated: {
+              type: 'boolean',
+              default: false
+            },
+            photo: {
+              type: 'string'
+            }
+          }
+        },
+        TrainerCreate: {
+          type: 'object',
+          required: ['userId'],
+          properties: {
+            userId: {
+              type: 'string',
+              description: 'User ID'
+            },
+            bio: {
+              type: 'string'
+            },
+            specialties: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
+            },
+            photo: {
+              type: 'string'
+            }
+          }
+        },
+        TrainerUpdate: {
+          type: 'object',
+          properties: {
+            bio: {
+              type: 'string'
+            },
+            specialties: {
+              type: 'array',
+              items: {
+                type: 'string'
+              }
+            },
+            isValidated: {
+              type: 'boolean'
+            },
+            photo: {
+              type: 'string'
+            }
+          }
+        },
+        Client: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string'
+            },
+            userId: {
+              type: 'object',
+              $ref: '#/components/schemas/User'
+            },
+            trainerId: {
+              type: 'string',
+              description: 'Associated trainer ID'
+            },
+            heightCm: {
+              type: 'number'
+            },
+            weightKg: {
+              type: 'number'
+            },
+            goal: {
+              type: 'string'
+            },
+            notes: {
+              type: 'string'
+            }
+          }
+        },
+        ClientCreate: {
+          type: 'object',
+          required: ['userId'],
+          properties: {
+            userId: {
+              type: 'string'
+            },
+            trainerId: {
+              type: 'string'
+            },
+            heightCm: {
+              type: 'number'
+            },
+            weightKg: {
+              type: 'number'
+            },
+            goal: {
+              type: 'string'
+            },
+            notes: {
+              type: 'string'
+            }
+          }
+        },
+        ClientUpdate: {
+          type: 'object',
+          properties: {
+            trainerId: {
+              type: 'string'
+            },
+            heightCm: {
+              type: 'number'
+            },
+            weightKg: {
+              type: 'number'
+            },
+            goal: {
+              type: 'string'
+            },
+            notes: {
+              type: 'string'
+            }
+          }
+        },
+        ChangeRequestCreate: {
+          type: 'object',
+          required: ['requestedTrainerId'],
+          properties: {
+            requestedTrainerId: {
+              type: 'string',
+              description: 'ID of the trainer to switch to'
+            },
+            reason: {
+              type: 'string',
+              description: 'Reason for the change request'
+            }
+          }
+        },
+        PlanCreate: {
+          type: 'object',
+          required: ['trainerId', 'clientId', 'name', 'frequencyPerWeek', 'startDate'],
+          properties: {
+            trainerId: {
+              type: 'string'
+            },
+            clientId: {
+              type: 'string'
+            },
+            name: {
+              type: 'string'
+            },
+            description: {
+              type: 'string'
+            },
+            frequencyPerWeek: {
+              type: 'integer',
+              enum: [3, 4, 5]
+            },
+            startDate: {
+              type: 'string',
+              format: 'date'
+            },
+            endDate: {
+              type: 'string',
+              format: 'date'
+            },
+            sessions: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  weekday: {
+                    type: 'string',
+                    enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+                  },
+                  exercises: {
+                    type: 'array',
+                    maxItems: 10,
+                    items: {
+                      type: 'object',
+                      properties: {
+                        name: {
+                          type: 'string'
+                        },
+                        sets: {
+                          type: 'number'
+                        },
+                        reps: {
+                          type: 'number'
+                        },
+                        instructions: {
+                          type: 'string'
+                        },
+                        videoUrl: {
+                          type: 'string'
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        PlanUpdate: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string'
+            },
+            description: {
+              type: 'string'
+            },
+            frequencyPerWeek: {
+              type: 'integer',
+              enum: [3, 4, 5]
+            },
+            startDate: {
+              type: 'string',
+              format: 'date'
+            },
+            endDate: {
+              type: 'string',
+              format: 'date'
+            },
+            isActive: {
+              type: 'boolean'
+            },
+            sessions: {
+              type: 'array',
+              items: {
+                type: 'object'
+              }
+            }
+          }
+        },
+        WorkoutLogCreate: {
+          type: 'object',
+          required: ['workoutPlanId', 'date', 'status'],
+          properties: {
+            workoutPlanId: {
+              type: 'string'
+            },
+            date: {
+              type: 'string',
+              format: 'date'
+            },
+            status: {
+              type: 'string',
+              enum: ['completed', 'missed', 'partial']
+            },
+            reason: {
+              type: 'string',
+              description: 'Required if status is "missed"'
+            },
+            photo: {
+              type: 'string',
+              format: 'binary',
+              description: 'Optional photo upload'
+            }
+          }
+        },
+        WorkoutLogUpdate: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['completed', 'missed', 'partial']
+            },
+            reason: {
+              type: 'string'
+            },
+            photo: {
+              type: 'string',
+              format: 'binary'
+            }
+          }
+        },
+        MessageCreate: {
+          type: 'object',
+          required: ['receiverId', 'text'],
+          properties: {
+            receiverId: {
+              type: 'string',
+              description: 'ID of the message receiver'
+            },
+            text: {
+              type: 'string',
+              description: 'Message text'
+            }
+          }
+        },
+        Message: {
+          type: 'object',
+          properties: {
+            _id: {
+              type: 'string'
+            },
+            senderId: {
+              type: 'string'
+            },
+            receiverId: {
+              type: 'string'
+            },
+            text: {
+              type: 'string'
+            },
+            read: {
+              type: 'boolean',
+              default: false
+            },
+            createdAt: {
+              type: 'string',
+              format: 'date-time'
+            }
+          }
         }
       }
     },
@@ -408,25 +656,70 @@ const options = {
         description: 'User management endpoints'
       },
       {
-        name: 'Games',
-        description: 'Game management endpoints'
+        name: 'Trainers',
+        description: 'Trainer profile management'
       },
       {
-        name: 'Tickets',
-        description: 'Ticket management endpoints'
+        name: 'Clients',
+        description: 'Client profile management'
       },
       {
-        name: 'Stadium',
-        description: 'Stadium management endpoints'
+        name: 'Change Requests',
+        description: 'Trainer change requests'
       },
       {
-        name: 'Member Requests',
-        description: 'Member request management endpoints'
+        name: 'Plans',
+        description: 'Training plans management'
+      },
+      {
+        name: 'WorkoutLogs',
+        description: 'Workout logs tracking'
+      },
+      {
+        name: 'Chat',
+        description: 'Messaging between users'
+      },
+      {
+        name: 'Uploads',
+        description: 'File uploads'
       }
-    ]
+    ],
+    responses: {
+      UnauthorizedError: {
+        description: 'Unauthorized - Invalid or missing token',
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/ErrorResponse'
+            }
+          }
+        }
+      },
+      NotFoundError: {
+        description: 'Resource not found',
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/ErrorResponse'
+            }
+          }
+        }
+      },
+      ValidationError: {
+        description: 'Validation error',
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/ValidationErrorResponse'
+            }
+          }
+        }
+      }
+    }
   },
   apis: [
-    './server/*.js', // Caminho para os arquivos com anotações Swagger
+    './server/*.js',
+    './server/src/modules/**/*.js',
     './index.js'
   ],
 };

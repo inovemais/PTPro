@@ -1,3 +1,121 @@
+@import "../../styles/variables";
+@import "../../styles/mixins";
+
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+    background-color: $bg-secondary;
+}
+
+.sidebar {
+    width: 260px;
+    background-color: $bg-primary;
+    border-right: 1px solid #E5E7EB;
+    padding: $spacing-xl;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.sidebarHeader {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    margin-bottom: $spacing-3xl;
+    padding-bottom: $spacing-xl;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.logoIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: $radius-lg;
+    @include gradient-primary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    svg {
+        width: 24px;
+        height: 24px;
+        color: white;
+    }
+}
+
+.logoTitle {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0;
+}
+
+.navMenu {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+}
+
+.navItem {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    padding: $spacing-md $spacing-lg;
+    border-radius: $radius-md;
+    font-size: $font-size-base;
+    font-weight: $font-weight-medium;
+    color: $text-secondary;
+    text-decoration: none;
+    transition: all $transition-base;
+    cursor: pointer;
+    
+    &:hover {
+        background-color: $bg-secondary;
+        color: $text-primary;
+    }
+    
+    &.active {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+        color: $primary-color;
+        font-weight: $font-weight-semibold;
+    }
+}
+
+.navIcon {
+    width: 20px;
+    height: 20px;
+    color: currentColor;
+}
+
+.mainContent {
+    flex: 1;
+    margin-left: 260px;
+    padding: $spacing-3xl;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-3xl;
+}
+
+.headerTitle {
+    font-size: $font-size-3xl;
+    font-weight: $font-weight-bold;
+    color: $text-primary;
+    margin: 0;
+}
+
+.contentArea {
+    background-color: $bg-primary;
+    border-radius: $radius-xl;
+    padding: $spacing-3xl;
+    box-shadow: $shadow-sm;
+}
+
 .container {
     display: flex;
     align-items: center;

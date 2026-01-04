@@ -1,5 +1,5 @@
 const config = {
-    db: process.env.MONGODB_URI || 'mongodb://localhost:27017/stadium',
+    db: process.env.MONGODB_URI || 'mongodb://localhost:27017/ptpro',
     secret: process.env.SECRET || 'supersecret',
     expiresPassword: parseInt(process.env.EXPIRES_PASSWORD) || 86400, // expires in 24hours
     saltRounds: parseInt(process.env.SALT_ROUNDS) || 10,

@@ -1,19 +1,10 @@
 const config = require("../../config");
+const fs = require("fs");
+const path = require("path");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
 function UserService(UserModel) {
-  let service = {
-    create,
-    createToken,
-    verifyToken,
-    findUser,
-    findUserById,
-    autorize,
-    update,
-    findAll
-  };
-
   function create(user) {
     return createPassword(user).then((hashPassword, err) => {
       if (err) {
@@ -83,7 +74,6 @@ function UserService(UserModel) {
       UserModel.find({})
         .skip(pagination.skip)
         .limit(pagination.limit)
-        .populate('memberId')
         .exec(function (err, users) {
           if (err) reject('Error finding users');
           resolve(users);
@@ -91,21 +81,50 @@ function UserService(UserModel) {
     });
   }
 
-  function findUser({ name, password }) {
+  // Buscar utilizador por email ou name e validar password
+  function findUser(userData) {
     return new Promise(function (resolve, reject) {
-      UserModel.findOne({ name }, function (err, user) {
-        if (err) reject(err);
-        //object of all users
+      const query = {};
+      
+      // Buscar por email ou name
+      if (userData.email) {
+        query.email = userData.email;
+      } else if (userData.name) {
+        query.name = userData.name;
+      } else {
+        return reject("Email or name is required");
+      }
 
-        if (!user) {
-          reject("This data is wrong");
+      UserModel.findOne(query, function (err, user) {
+        if (err) {
+          return reject("Error finding user");
         }
-        resolve(user);
-      });
-    }).then((user) => {
-      return comparePassword(password, user.password).then((match) => {
-        if (!match) return Promise.reject("User not valid");
-        return Promise.resolve(user);
+        
+        if (!user) {
+          return reject("This data is wrong");
+        }
+
+        // Validar password
+        if (!userData.password) {
+          return reject("Password is required");
+        }
+
+        comparePassword(userData.password, user.password)
+          .then((isMatch) => {
+            if (!isMatch) {
+              return reject("This data is wrong");
+            }
+            
+            // Verificar se o utilizador é válido
+            if (!user.role || !user.role.scope || user.role.scope.length === 0) {
+              return reject("User not valid");
+            }
+            
+            resolve(user);
+          })
+          .catch((err) => {
+            reject("This data is wrong");
+          });
       });
     });
   }
@@ -146,7 +165,17 @@ function UserService(UserModel) {
     };
   }
 
-  return service;
+  // Retornar objeto service com todas as funções
+  return {
+    create,
+    createToken,
+    verifyToken,
+    findUser,
+    findUserById,
+    autorize,
+    update,
+    findAll
+  };
 }
 
 module.exports = UserService;

@@ -1,13 +1,10 @@
 const bodyParser = require("body-parser");
 const express = require("express");
-const Members = require("../data/member");
 const Users = require("../data/users");
 const scopes = require("../data/users/scopes");
 const VerifyToken = require("../middleware/token");
 const cookieParser = require("cookie-parser");
 const User = require("../data/users/users");
-const path = require("path");
-const fs = require("fs-extra");
 
 const UsersRouter = (io) => {
   let router = express();
@@ -63,7 +60,6 @@ const UsersRouter = (io) => {
   router
   .route("/")
   .get(Users.autorize([scopes.Admin]), function (req, res, next) {
-    console.log("get all users");
 
     const pageLimit = req.query.limit ? parseInt(req.query.limit) : 10;
     const pageSkip = req.query.skip ? parseInt(req.query.skip) : 0;
@@ -87,7 +83,6 @@ const UsersRouter = (io) => {
         next();
       })
       .catch((err) => {
-        console.log(err.message);
         res.status(500).send({ error: err.message });
         next();
       });
@@ -97,7 +92,7 @@ const UsersRouter = (io) => {
    * /users:
    *   post:
    *     summary: Create a new user (Admin only)
-   *     description: Create a new NonMember user. Only NonMember users can be created via this endpoint. Requires admin authentication.
+   *     description: Create a new user with scope Client or PersonalTrainer. Only Admin can create users via this endpoint. Requires admin authentication.
    *     tags: [Users]
    *     security:
    *       - cookieAuth: []
@@ -131,7 +126,7 @@ const UsersRouter = (io) => {
    *                     type: string
    *                   scope:
    *                     type: string
-   *                     enum: ["notMember"]
+   *                     enum: ["client", "PersonalTrainer"]
    *           example:
    *             name: "user1"
    *             email: "user1@estadio.com"
@@ -141,26 +136,44 @@ const UsersRouter = (io) => {
    *             taxNumber: 987654321
    *             age: 25
    *             role:
-   *               name: "user"
-   *               scope: "notMember"
+   *               name: "client"
+   *               scope: "client"
    *     responses:
    *       200:
    *         description: User created successfully
    *       401:
-   *         description: Unauthorized or Only NonMember users can be created
+   *         description: Unauthorized or Invalid scope (only Client or PersonalTrainer allowed)
    */
-  .post(Users.autorize([scopes.Admin]), function (req, res, next) {
-    console.log("Create user");
+  .post(Users.autorize([scopes.Admin, scopes.PersonalTrainer]), function (req, res, next) {
     let body = req.body;
     let { role } = body;
+    
+    // Get user scopes from token
+    const decoded = req.decoded || {};
+    // Parse role from JWT token - role is an array like ["PersonalTrainer"]
+    const userScopes = Array.isArray(decoded.role)
+      ? decoded.role
+      : decoded.role
+      ? [decoded.role]
+      : [];
+    const isAdmin = userScopes.includes(scopes.Admin);
+    const isTrainer = userScopes.includes(scopes.PersonalTrainer) && !isAdmin;
 
-    console.log(role);
 
-    if(role.scope !== scopes.NonMember) {
-      return res.status(401).send({ auth: false, message: 'Only create NonMembers' })
+    // Validar que o scope é válido (Admin, PersonalTrainer ou Client)
+    const validScopes = [scopes.Admin, scopes.PersonalTrainer, scopes.Client];
+    const scopeValue = Array.isArray(role.scope) ? role.scope[0] : role.scope;
+    
+    if (!validScopes.includes(scopeValue)) {
+      return res.status(401).send({ auth: false, message: 'Invalid scope. Only Admin, PersonalTrainer or Client are allowed' })
+    }
+    
+    // If trainer (not admin), only allow creating Client users
+    if (isTrainer && scopeValue !== scopes.Client) {
+      return res.status(403).send({ auth: false, message: 'Trainers can only create users with Client scope' })
     }
 
-    // Criar utilizador diretamente - o membro será criado automaticamente pelo middleware
+    // Criar utilizador
     Users.create(body)
       .then((user) => {
         res.status(200);
@@ -177,7 +190,6 @@ const UsersRouter = (io) => {
   router
     .route("/:userId")
     .put(Users.autorize([scopes.Admin]), function (req, res, next) {
-      console.log("update a member by id");
       let userId = req.params.userId;
       let body = req.body;
 
@@ -193,196 +205,87 @@ const UsersRouter = (io) => {
         });
     });
 
+  /**
+   * @swagger
+   * /users/change-password:
+   *   put:
+   *     summary: Change user password
+   *     description: Change password for the authenticated user. Requires current password validation.
+   *     tags: [Users]
+   *     security:
+   *       - cookieAuth: []
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [currentPassword, newPassword]
+   *             properties:
+   *               currentPassword:
+   *                 type: string
+   *                 format: password
+   *                 description: Current password
+   *               newPassword:
+   *                 type: string
+   *                 format: password
+   *                 description: New password (minimum 6 characters)
+   *           example:
+   *             currentPassword: "oldpassword123"
+   *             newPassword: "newpassword456"
+   *     responses:
+   *       200:
+   *         description: Password changed successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: "Password changed successfully"
+   *                 user:
+   *                   type: object
+   *       400:
+   *         description: Bad request - validation error
+   *       401:
+   *         description: Unauthorized or incorrect current password
+   *       404:
+   *         description: User not found
+   */
   router
-    .route("/:userId/member")
-    .post(Users.autorize([scopes.Admin]), function (req, res, next) {
-      let body = req.body;
-      let userId = req.params.userId;
+    .route("/change-password")
+    .put(function (req, res, next) {
+      const decoded = req.decoded || {};
+      const userId = decoded.id;
 
-      // Processar imagem Base64 se existir
-      if (body.base64image && body.base64image.startsWith('data:image/')) {
-        try {
-          // Extrair informações da string Base64
-          const matches = body.base64image.match(/^data:image\/(\w+);base64,(.+)$/);
-          if (!matches || matches.length !== 3) {
-            return res.status(400).send({ error: 'Formato de imagem Base64 inválido' });
-          }
-
-          const imageType = matches[1]; // png, jpeg, etc.
-          const base64Data = matches[2]; // dados base64 sem prefixo
-
-          // Decodificar Base64 para buffer
-          const imageBuffer = Buffer.from(base64Data, 'base64');
-
-          // Criar diretório de uploads se não existir
-          const uploadsDir = path.join(__dirname, '../uploads/members');
-          fs.ensureDirSync(uploadsDir);
-
-          // Gerar nome único para o ficheiro
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-          const filename = `member-${uniqueSuffix}.${imageType}`;
-          const filepath = path.join(uploadsDir, filename);
-
-          // Salvar ficheiro
-          fs.writeFileSync(filepath, imageBuffer);
-
-          // Atualizar body.photo com o caminho relativo para servir via HTTP
-          body.photo = `/uploads/members/${filename}`;
-
-          // Remover base64image do body (já foi processado)
-          delete body.base64image;
-
-          console.log(`Foto do membro salva: ${filepath}`);
-        } catch (err) {
-          console.error('Erro ao processar imagem Base64:', err);
-          return res.status(500).send({ error: 'Erro ao processar imagem' });
-        }
+      if (!userId) {
+        return res.status(401).send({ error: "User ID not found in token" });
       }
 
-      // Criar membro
-      Members.create(body)
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword) {
+        return res.status(400).send({ error: "Current password is required" });
+      }
+
+      if (!newPassword) {
+        return res.status(400).send({ error: "New password is required" });
+      }
+
+      Users.changePassword(userId, currentPassword, newPassword)
         .then((result) => {
-          console.log(result)
-          return Users.update(userId, { memberId: result.member._id});
-        })
-        .then((user) => {
-          console.log("Created!");
-          
-          // Emitir notificação Socket.IO quando um membro é criado
-          if (io) {
-            io.emit('member:created', {
-              user: user,
-              member: result.member,
-              message: `Novo membro criado: ${user.name || 'Sem nome'}`,
-              timestamp: new Date().toISOString()
-            });
-            console.log('Socket.IO notification emitted: member:created');
-          }
-          
-          res.status(200);
-          res.send(user);
+          res.status(200).send(result);
           next();
         })
         .catch((err) => {
-          console.log("Member already exists!");
-          console.log(err);
-          err.status = err.status || 500;
-          res.status(401);
-          next();
-        });
-    })
-
-  router
-    .route("/member")
-    .get(
-      Users.autorize([scopes.Admin, scopes.Member, scopes.NonMember]),
-      function (req, res, next) {
-        console.log("get all tickets");
-
-        const pageLimit = req.query.limit ? parseInt(req.query.limit) : 5;
-        const pageSkip = req.query.skip ? parseInt(req.query.skip) : 0;
-
-        req.pagination = {
-          limit: pageLimit,
-          skip: pageSkip,
-        };
-
-        Members.findAll(req.pagination)
-          .then((members) => {
-            const response = {
-              auth: true,
-              members: members,
-            };
-            res.send(response);
-            next();
-          })
-          .catch((err) => {
-            console.log(err.message);
-            next();
-          });
-      }
-    );
-
-  router
-    .route("/member/:memberId")
-    .get(
-      Users.autorize([scopes.Admin, scopes.Member, scopes.NonMember]),
-      function (req, res, next) {
-        console.log("get member by id");
-        let memberId = req.params.memberId;
-
-        Members.findById(memberId)
-          .then((member) => {
-            if (!member) {
-              return res.status(404).send({ error: "Member not found" });
-            }
-            res.status(200);
-            res.send(member);
-            next();
-          })
-          .catch((err) => {
-            console.error("Error finding member:", err);
-            res.status(404).send({ error: err.message || "Member not found" });
-            next();
-          });
-      }
-    )
-    .put(Users.autorize([scopes.Admin]), function (req, res, next) {
-      console.log("update a member by id");
-      let memberId = req.params.memberId;
-      let body = req.body;
-
-      // Usar findUserById para encontrar o utilizador
-      Users.findUserById(memberId)
-        .then((user) => {
-          if (!user) {
-            return res.status(404).send({ error: "User not found" });
-          }
-
-          // Se o utilizador tem memberId, atualizar o membro
-          if (user.memberId) {
-            return Members.update(user.memberId, body)
-              .then((member) => {
-                res.status(200);
-                res.send(member);
-                next();
-              })
-              .catch((err) => {
-                console.error("Error updating member:", err);
-                res.status(500).send({ error: "Error updating member" });
-                next();
-              });
-          } else {
-            return res.status(404).send({ error: "User does not have an associated member" });
-          }
-        })
-        .catch((err) => {
-          console.error("Error finding user:", err);
-          res.status(404).send({ error: "User not found" });
+          console.error("Error changing password:", err);
+          const statusCode = err.includes("not found") ? 404 : 
+                            err.includes("incorrect") ? 401 : 400;
+          res.status(statusCode).send({ error: err });
           next();
         });
     });
-
-  router
-    .route("/member/tax/:taxNumber")
-    .get(
-      Users.autorize([scopes.Admin, scopes.Member, scopes.NonMember]),
-      function (req, res, next) {
-        console.log("get the member by tax");
-
-        let taxNumber = req.params.taxNumber;
-
-        Members.findMemberByTaxNumber(taxNumber)
-          .then((member) => {
-            res.send(member);
-            next();
-          })
-          .catch((err) => {
-            console.log(err.message);
-            next();
-          });
-      }
-    );
 
   return router;
 };

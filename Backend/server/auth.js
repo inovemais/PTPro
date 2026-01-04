@@ -14,9 +14,144 @@ function AuthRouter() {
   router.use(bodyParser.json({ limit: "100mb" }));
   router.use(bodyParser.urlencoded({ limit: "100mb", extended: true }));
   router.use(cookieParser());
+  
+  // Debug middleware para ver todas as rotas chamadas
+  router.use((req, res, next) => {
+    next();
+  });
 
   // ========== ROTAS PÚBLICAS (sem autenticação) ==========
   
+  /**
+   * @swagger
+   * /auth/register/admin:
+   *   post:
+   *     summary: Register a new admin user (Development/Testing only)
+   *     description: Creates a new admin user. The role.scope must include 'admin'. This endpoint should be used for initial admin creation or testing purposes.
+   *     tags: [Auth]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [email, password, role]
+   *             properties:
+   *               email:
+   *                 type: string
+   *                 format: email
+   *                 example: "admin@ptpro.com"
+   *               password:
+   *                 type: string
+   *                 format: password
+   *                 example: "admin123"
+   *               firstName:
+   *                 type: string
+   *                 example: "Admin"
+   *               lastName:
+   *                 type: string
+   *                 example: "User"
+   *               phone:
+   *                 type: string
+   *                 example: "+351912345678"
+   *               dateOfBirth:
+   *                 type: string
+   *                 format: date
+   *                 example: "1990-01-01T00:00:00.000Z"
+   *               address:
+   *                 type: string
+   *                 example: "Rua Admin"
+   *               taxNumber:
+   *                 type: number
+   *                 example: 123456789
+   *               role:
+   *                 type: object
+   *                 required: [name, scope]
+   *                 properties:
+   *                   name:
+   *                     type: string
+   *                     example: "admin"
+   *                   scope:
+   *                     type: array
+   *                     items:
+   *                       type: string
+   *                     example: ["admin"]
+   *     responses:
+   *       200:
+   *         description: Admin user created successfully
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 message:
+   *                   type: string
+   *                   example: "User saved"
+   *                 auth:
+   *                   type: boolean
+   *                   example: true
+   *                 token:
+   *                   type: string
+   *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   *                 user:
+   *                   type: object
+   *       401:
+   *         description: Only admin users can be created via this endpoint
+   *       500:
+   *         description: Server error
+   */
+  // Endpoint público para registro de admin (apenas para desenvolvimento/testes)
+  // IMPORTANTE: Esta rota DEVE estar antes de /register para funcionar corretamente
+  router.post("/register/admin", function (req, res, next) {
+    const body = req.body;
+    
+    const { role } = body;
+    const scopes = require("../data/users/scopes");
+
+    // Accept either a string or array for scope; must contain 'admin'
+    const roleScopes = Array.isArray(role && role.scope) ? role.scope : [role && role.scope];
+    if(!roleScopes.includes(scopes.Admin)) {
+      return res.status(401).send({ auth: false, message: 'Only create Admin via this endpoint' })
+    }
+
+    if (!body.name && body.email) {
+      body.name = body.email.split('@')[0];
+    }
+
+    // Garantir que o nome seja único - se já existir, adicionar número
+    const User = require("../data/users/users");
+    const checkAndGenerateUniqueName = (baseName, counter = 0) => {
+      const nameToCheck = counter === 0 ? baseName : `${baseName}${counter}`;
+      return User.findOne({ name: nameToCheck })
+        .then((existingUser) => {
+          if (existingUser) {
+            // Nome já existe, tentar com próximo número
+            return checkAndGenerateUniqueName(baseName, counter + 1);
+          } else {
+            // Nome único encontrado
+            body.name = nameToCheck;
+            return Promise.resolve();
+          }
+        });
+    };
+
+    checkAndGenerateUniqueName(body.name)
+      .then(() => {
+        // Criar admin diretamente - o membro será criado automaticamente pelo middleware se houver taxNumber
+        return Users.create(body);
+      })
+      .then((saved) => Users.createToken(saved.user))
+      .then((response) => {
+        res.status(200);
+        res.send(response);
+      })
+      .catch((err) => {
+        res.status(500);
+        res.send(err);
+        next();
+      });
+  });
+
   // Endpoint público para login via QR code
   router.route("/qr-code/login").post(function (req, res, next) {
     const { qrCodeData } = req.body;
@@ -61,7 +196,6 @@ function AuthRouter() {
             maxAge: 86400000 // 24 horas
           });
           
-          console.log(`🍪 QR Code login cookie set: secure=${isSecure}, sameSite=${isSecure ? 'none' : 'lax'}`);
           res.status(200).send({
             success: true,
             auth: true,
@@ -83,8 +217,8 @@ function AuthRouter() {
    * @swagger
    * /auth/register:
    *   post:
-   *     summary: Register a new admin user
-   *     description: Creates a new admin user. The role.scope must include 'admin'. A member will be automatically created and associated with the user.
+   *     summary: Register a new member user
+   *     description: Creates a new member user. The role.scope must include 'member'. A member will be automatically created and associated with the user.
    *     tags: [Auth]
    *     requestBody:
    *       required: true
@@ -93,19 +227,23 @@ function AuthRouter() {
    *           schema:
    *             $ref: '#/components/schemas/RegisterRequest'
    *           example:
-   *             name: "adminuser"
-   *             email: "admin@estadio.com"
+   *             name: "memberuser"
+   *             firstName: "John"
+   *             lastName: "Doe"
+   *             email: "member@example.com"
+   *             phone: "+351912345678"
+   *             dateOfBirth: "1990-01-01T00:00:00.000Z"
    *             password: "password123"
    *             address: "Rua lá de casa"
    *             country: "Portugal"
    *             taxNumber: 123456789
    *             age: 30
    *             role:
-   *               name: "admin"
-   *               scope: ["admin"]
+   *               name: "member"
+   *               scope: ["member"]
    *     responses:
    *       200:
-   *         description: Admin user created successfully
+   *         description: Member user created successfully
    *         content:
    *           application/json:
    *             schema:
@@ -116,10 +254,10 @@ function AuthRouter() {
    *               token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
    *               user:
    *                 _id: "507f1f77bcf86cd799439011"
-   *                 name: "admin"
-   *                 email: "admin@estadio.com"
+   *                 name: "memberuser"
+   *                 email: "member@example.com"
    *       401:
-   *         description: Only admin users can be created via this endpoint
+   *         description: Only member users can be created via this endpoint
    *         content:
    *           application/json:
    *             schema:
@@ -130,7 +268,7 @@ function AuthRouter() {
    *                   example: false
    *                 message:
    *                   type: string
-   *                   example: "Only create Admin"
+   *                   example: "Only create Client"
    *       500:
    *         description: Server error (e.g., duplicate email, name, or taxNumber)
    *         content:
@@ -138,26 +276,77 @@ function AuthRouter() {
    *             schema:
    *               $ref: '#/components/schemas/Error'
    */
-  // Endpoint público para registro (criação de admin)
+  // Endpoint público para registro (criação de member)
   router.route("/register").post(function (req, res, next) {
     const body = req.body;
     
     const { role } = body;
+    const scopes = require("../data/users/scopes");
 
-    // Accept either a string or array for scope; must contain 'admin'
-    const scopes = Array.isArray(role && role.scope) ? role.scope : [role && role.scope];
-    if(!scopes.includes('admin')) {
-      return res.status(401).send({ auth: false, message: 'Only create Admin' })
+    // Accept either a string or array for scope; must contain 'client'
+    const roleScopes = Array.isArray(role && role.scope) ? role.scope : [role && role.scope];
+    if(!roleScopes.includes(scopes.Client)) {
+      return res.status(401).send({ auth: false, message: 'Only create Client' })
     }
 
-    // Criar admin diretamente - o membro será criado automaticamente pelo middleware
-    Users.create(body)
+    // Se não foi fornecido um nome, gerar a partir do email
+    if (!body.name && body.email) {
+      body.name = body.email.split('@')[0];
+    }
+
+    // Garantir que o nome seja único - se já existir, adicionar número
+    const User = require("../data/users/users");
+    const checkAndGenerateUniqueName = (baseName, counter = 0) => {
+      const nameToCheck = counter === 0 ? baseName : `${baseName}${counter}`;
+      return User.findOne({ name: nameToCheck })
+        .then((existingUser) => {
+          if (existingUser) {
+            // Nome já existe, tentar com próximo número
+            return checkAndGenerateUniqueName(baseName, counter + 1);
+          } else {
+            // Nome único encontrado
+            body.name = nameToCheck;
+            return Promise.resolve();
+          }
+        });
+    };
+
+    checkAndGenerateUniqueName(body.name)
+      .then(() => {
+        // Criar user com role client
+        return Users.create(body);
+      })
+      .then((saved) => {
+        // Criar perfil de cliente automaticamente com isValidated: false
+        const Clients = require("../data/clients");
+        const clientData = {
+          userId: saved.user._id,
+          isValidated: false, // Cliente precisa ser validado por admin/trainer
+        };
+        
+        // Adicionar campos opcionais do body se existirem
+        if (body.heightCm) clientData.heightCm = body.heightCm;
+        if (body.weightKg) clientData.weightKg = body.weightKg;
+        if (body.goal) clientData.goal = body.goal;
+        if (body.notes) clientData.notes = body.notes;
+
+        return Clients.ClientService.create(clientData)
+          .then(() => saved)
+          .catch((err) => {
+            // Se já existe perfil de cliente, continuar (pode acontecer em caso de retry)
+            if (err.message && err.message.includes("already exists")) {
+              return saved;
+            }
+            throw err;
+          });
+      })
       .then((saved) => Users.createToken(saved.user))
       .then((response) => {
         res.status(200);
         res.send(response);
       })
       .catch((err) => {
+        console.error("Error in registration:", err);
         res.status(500);
         res.send(err);
         next();
@@ -210,6 +399,7 @@ function AuthRouter() {
   // Endpoint público para login
   router.route("/login").post(function (req, res, next) {
     let body = req.body;
+    if (body.name && !body.email) { body.email = body.name; }
 
     return Users.findUser(body)
       .then((user) => {
@@ -237,8 +427,6 @@ function AuthRouter() {
         
         res.cookie("token", response.token, cookieOptions);
         
-        console.log(`🍪 Cookie set: secure=${isSecure}, sameSite=${cookieOptions.sameSite}, domain=${req.headers.host}`);
-        console.log(`🍪 Cookie will be sent to: ${req.headers.origin || 'same-origin'}`);
         
         // Gerar QR code para login futuro
         const userId = response.decoded?.id || response.user?._id?.toString();
@@ -265,10 +453,6 @@ function AuthRouter() {
               user: response.user,
               qrCode: qrCodeImage
             };
-            console.log('📤 Sending login response with QR code');
-            console.log('📤 Response includes token:', !!responseBody.token);
-            console.log('📤 Response includes auth:', !!responseBody.auth);
-            console.log('📤 Token value (first 20 chars):', responseBody.token ? responseBody.token.substring(0, 20) + '...' : 'MISSING');
             res.send(responseBody);
           } catch (qrErr) {
             console.error('Error generating QR code:', qrErr);
@@ -285,15 +469,10 @@ function AuthRouter() {
             decoded: response.decoded,
             user: response.user
           };
-          console.log('📤 Sending login response without QR code');
-          console.log('📤 Response includes token:', !!responseBody.token);
-          console.log('📤 Response includes auth:', !!responseBody.auth);
-          console.log('📤 Token value (first 20 chars):', responseBody.token ? responseBody.token.substring(0, 20) + '...' : 'MISSING');
           res.send(responseBody);
         }
       })
       .catch((err) => {
-        console.log('Login error:', err);
         // Retornar 401 para credenciais inválidas
         const errorMessage = err === "This data is wrong" || err === "User not valid" 
           ? "Credenciais inválidas" 
@@ -438,16 +617,17 @@ function AuthRouter() {
               }
             }
           });
-          next();
         })
         .catch((err) => {
           console.error('Error fetching user:', err);
-          res.status(500).send({ error: err.message || 'Error fetching user' });
-          next();
+          if (!res.headersSent) {
+            res.status(500).send({ error: err.message || 'Error fetching user' });
+          }
         });
     } catch (err) {
-      res.status(500).send({ error: err.message });
-      next();
+      if (!res.headersSent) {
+        res.status(500).send({ error: err.message });
+      }
     }
   });
 

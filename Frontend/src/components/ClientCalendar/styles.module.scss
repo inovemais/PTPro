@@ -1,0 +1,58 @@
+.container {
+  margin-top: 2rem;
+}
+
+.section {
+  margin-top: 1.5rem;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.75rem;
+  overflow-x: auto;
+}
+
+.dayColumn {
+  border: 1px solid #eee;
+  border-radius: 4px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.dayHeader {
+  font-weight: 600;
+  text-align: center;
+  padding: 0.5rem;
+  background: #f0f0f0;
+}
+
+.dayBody {
+  padding: 0.5rem;
+  flex: 1;
+}
+
+.empty {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.sessionCard {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.4rem;
+  margin-bottom: 0.4rem;
+  background: #fff;
+}
+
+.statusTag {
+  font-size: 0.75rem;
+  text-align: center;
+  padding: 0.25rem 0.5rem;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+
