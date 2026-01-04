@@ -120,8 +120,9 @@ const isRender = "RENDER" in process.env;
 
 const allowedOrigins = [
   customFrontendUrl,
+  'https://pt-pro.vercel.app', // Frontend atual
   'https://pwa-all-app.vercel.app',
-  'https://pwa-app-swart-xi.vercel.app', // Frontend atual
+  'https://pwa-app-swart-xi.vercel.app',
   'http://localhost:5173', // Vite default port
   'http://localhost:3000', // React default port
   'http://127.0.0.1:5173', // Vite alternative
