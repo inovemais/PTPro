@@ -2,12 +2,21 @@
 
 Aplicação PWA (Progressive Web App) para gestão de ginásios/boxes de fitness, treinadores, clientes e planos de treino.
 
+## 🚀 Links de Produção
+
+- **Frontend**: https://pt-pro.vercel.app
+- **Backend**: https://ptpro.onrender.com
+- **API Docs**: https://ptpro.onrender.com/api-docs
+- **Repositório Git**: https://github.com/inovemais/PTPro.git
+
 ## Estrutura do Projeto
 
 ```
 PTPro/
 ├── Backend/          # API Node.js/Express
 ├── Frontend/         # Aplicação React
+├── render.yaml       # Configuração do deploy no Render
+├── vercel.json       # Configuração do deploy no Vercel
 └── README.md
 ```
 
