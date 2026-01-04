@@ -38,7 +38,7 @@ const getSocketUrl = () => {
   
   // Em produção, usar a mesma base URL da API
   const apiBase = getApiBase();
-  const finalUrl = apiBase || 'https://pwa-app-nudl.onrender.com';
+  const finalUrl = apiBase || 'https://ptpro.onrender.com';
   console.log('🔌 Production mode: returning', finalUrl);
   return finalUrl;
 };

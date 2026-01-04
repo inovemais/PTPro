@@ -15,7 +15,7 @@ const getApiBaseUrl = (): string => {
   }
 
   // In production, use full URL from env or default
-  return import.meta.env.VITE_API_URL || 'https://pwa-app-nudl.onrender.com';
+  return import.meta.env.VITE_API_URL || 'https://ptpro.onrender.com';
 };
 
 const baseURL = getApiBaseUrl();

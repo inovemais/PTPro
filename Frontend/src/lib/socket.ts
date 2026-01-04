@@ -20,7 +20,7 @@ export const getSocket = (): Socket => {
   if (isLocalhost || isDevelopment) {
     socketUrl = undefined; // Use proxy
   } else {
-    socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'https://pwa-app-nudl.onrender.com';
+    socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'https://ptpro.onrender.com';
   }
 
   socketInstance = io(socketUrl, {

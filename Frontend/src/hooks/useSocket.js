@@ -39,7 +39,7 @@ export const useSocket = (url = undefined, options = {}) => {
       } else {
         // Em produção, usar a mesma base URL da API
         const apiBase = getApiBase();
-        socketUrl = apiBase || 'https://pwa-app-nudl.onrender.com';
+        socketUrl = apiBase || 'https://ptpro.onrender.com';
         console.log('🔌 Production mode: using', socketUrl);
       }
     }

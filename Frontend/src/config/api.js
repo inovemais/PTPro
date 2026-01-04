@@ -20,7 +20,7 @@ const isLocalhost = typeof window !== 'undefined' &&
 // In production, use full URL from env or default to Render URL
 const rawApiBase = import.meta.env.VITE_API_URL || 
                    import.meta.env.REACT_APP_API_URL || 
-                   (isProduction ? 'https://pwa-app-nudl.onrender.com' : '');
+                   (isProduction ? 'https://ptpro.onrender.com' : '');
 
 console.log('🔧 [API Config] Initialization:', {
   VITE_API_URL: import.meta.env.VITE_API_URL,
