@@ -34,7 +34,6 @@ Thumbs.db
 
 # Uploads (arquivos enviados pelos usuários)
 Backend/uploads/
-uploads/
 
 # Database
 *.db
